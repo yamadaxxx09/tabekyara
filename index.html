@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>たべきゃら | Vanilla HTML/CSS/JS</title>
+  <style>
+    :root {
+      --bg: #0b0f14;          /* 背景(外側) */
+      --screen: #f6f7fb;      /* 画面(内側) */
+      --text: #10131a;
+      --muted: #677085;
+      --primary: #4f46e5;     /* Indigo */
+      --accent: #10b981;      /* Emerald */
+      --danger: #ef4444;      /* Red */
+      --border: #e6e8f0;
+      --shadow: 0 20px 80px rgba(0,0,0,.25);
+      --radius: 22px;
+    }
+    html, body { height: 100%; }
+    body {
+      margin: 0; display: grid; place-items: center; background: radial-gradient(1200px 700px at 50% -10%, #151a22, var(--bg)); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; color: var(--text);
+    }
+    /* iPhoneフレーム風 */
+    .phone {
+      position: relative; width: 390px; height: 844px; border-radius: calc(var(--radius) + 10px); padding: 12px; background: linear-gradient(145deg, #2c3442, #0f1319); box-shadow: var(--shadow), inset 0 0 0 1px rgba(255,255,255,.06);
+    }
+    .screen {
+      position: relative; width: 100%; height: 100%; border-radius: var(--radius); background: var(--screen); overflow: hidden; box-shadow: inset 0 0 0 1px var(--border);
+      display: grid; grid-template-rows: auto 1fr auto; /* topbar, content, tabbar */
+    }
+    /* Dynamic Island/ノッチ風 */
+    .island { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 120px; height: 35px; background: #0c0f14; border-radius: 18px; box-shadow: 0 6px 12px rgba(0,0,0,.25); z-index: 2; }
+
+    /* ステータス/ヘッダー */
+    header {
+      display: flex; align-items: center; justify-content: space-between; padding: 54px 16px 12px; position: relative; background: linear-gradient(#ffffff, #fafbff);
+      border-bottom: 1px solid var(--border);
+    }
+    header h1 { font-size: 18px; margin: 0; font-weight: 700; }
+    .hdr-btn { border: 1px solid var(--border); background: #fff; padding: 6px 10px; border-radius: 12px; font-size: 12px; color: var(--muted); cursor: pointer; }
+
+    /* コンテンツ領域 */
+    #app { padding: 16px; overflow: auto; }
+    .card { background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 14px; box-shadow: 0 2px 8px rgba(16,19,26,.03); }
+    .title { font-size: 20px; margin: 4px 0 12px; }
+    .muted { color: var(--muted); }
+
+    /* フォーム */
+    .field { display: grid; gap: 6px; margin-bottom: 12px; }
+    label { font-size: 12px; color: var(--muted); }
+    input, select { border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; font-size: 14px; background: #fff; }
+    .btn { display: inline-block; padding: 10px 14px; border-radius: 12px; border: none; cursor: pointer; font-weight: 600; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-outline { background: #fff; border: 1px solid var(--border); color: var(--text); }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-block { width: 100%; text-align: center; }
+
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* タブバー（下の5つのボタン） */
+    nav.tabbar { display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1px solid var(--border); background: #fff; }
+    .tab { padding: 8px 0 10px; display: grid; gap: 4px; place-items: center; font-size: 10px; color: var(--muted); cursor: pointer; }
+    .tab.active { color: var(--primary); font-weight: 700; }
+
+    /* 小さなアイコン風（CSSだけで） */
+    .ico { width: 22px; height: 22px; border-radius: 6px; border: 2px solid currentColor; }
+    .ico.home { border-radius: 50%; }
+    .ico.user { border-top-left-radius: 50%; }
+
+    /* ちょいアニメ */
+    .fade { animation: fade .2s ease; }
+    @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+    /* スマホ実機寄せ（オプション） */
+    @media (max-width: 480px) {
+      body { place-items: start; }
+      .phone { width: 100vw; height: 100vh; border-radius: 0; padding: 0; background: var(--screen); box-shadow: none; }
+      .screen { border-radius: 0; box-shadow: none; }
+      .island { top: env(safe-area-inset-top, 8px); }
+      header { padding-top: calc(36px + env(safe-area-inset-top, 0px)); }
+    }
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <div class="screen">
+      <div class="island" aria-hidden="true"></div>
+      <header>
+        <button class="hdr-btn" id="backBtn">戻る</button>
+        <h1 id="title">たべきゃら</h1>
+        <button class="hdr-btn" id="helpBtn">ヘルプ</button>
+      </header>
+      <main id="app" class="fade"></main>
+      <nav class="tabbar">
+        <div class="tab" data-tab="mypage"><div class="ico user"></div><span>My</span></div>
+        <div class="tab" data-tab="accessory"><div class="ico"></div><span>着替え</span></div>
+        <div class="tab active" data-tab="home"><div class="ico home"></div><span>Home</span></div>
+        <div class="tab" data-tab="friends"><div class="ico"></div><span>友だち</span></div>
+        <div class="tab" data-tab="settings"><div class="ico"></div><span>設定</span></div>
+      </nav>
+    </div>
+  </div>
+
+  <script>
+    // --- シンプルな状態管理（localStorageに保存） ---
+    const State = {
+      get() { return JSON.parse(localStorage.getItem('tabekyara') || '{}'); },
+      set(patch) { const next = { ...State.get(), ...patch }; localStorage.setItem('tabekyara', JSON.stringify(next)); return next; },
+      clear() { localStorage.removeItem('tabekyara'); }
+    };
+
+    // --- ルーター（# でページ分岐） ---
+    const routes = {
+      '': 'start',
+      'start': 'start',
+      'login': 'login',
+      'register': 'register',
+      'onboarding': 'onboarding',
+      'onboarding/pet-select': 'petSelect',
+      'onboarding/pet-name': 'petName',
+      'onboarding/goal': 'goal',
+      'main': 'main',
+    };
+
+    const app = document.getElementById('app');
+    const titleEl = document.getElementById('title');
+    const backBtn = document.getElementById('backBtn');
+
+    function navigate(path) { location.hash = '#' + path; }
+
+    function parseHash() {
+      const raw = location.hash.replace(/^#/, '');
+      return raw || '';
+    }
+
+    function render() {
+      app.classList.remove('fade'); void app.offsetWidth; app.classList.add('fade');
+      const path = parseHash();
+      const key = routes[path] || routes[path.split('?')[0]] || 'start';
+      const page = Pages[key] || Pages.start;
+      const title = Titles[key] || 'たべきゃら';
+      titleEl.textContent = title;
+      app.innerHTML = page();
+      attachEvents[key]?.();
+      highlightTab(key);
+      updateBackButton();
+    }
+
+    function updateBackButton() {
+      backBtn.onclick = () => history.back();
+    }
+
+    function highlightTab(key) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      const map = { main: 'home', start: 'home', login: 'home', register: 'home', onboarding: 'home', petSelect: 'home', petName: 'home', goal: 'home', mypage: 'mypage', accessory: 'accessory', friends: 'friends', settings: 'settings' };
+      const current = map[key] || 'home';
+      const tab = document.querySelector(`.tab[data-tab="${current}"]`);
+      if (tab) tab.classList.add('active');
+    }
+
+    // タブバーのクリック
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const name = tab.getAttribute('data-tab');
+        if (name === 'home') navigate('main');
+        else if (name === 'mypage') alert('MyページはMVP後でOK！');
+        else if (name === 'accessory') alert('着替えは後で実装予定👗');
+        else if (name === 'friends') alert('友だち機能はMVP後🫶');
+        else if (name === 'settings') navigate('start');
+      });
+    });
+
+    // --- ページ群 ---
+    const Titles = {
+      start: 'はじめる', login: 'ログイン', register: '新規登録', onboarding: 'ユーザー情報', petSelect: 'ペット選択', petName: 'ペット名', goal: '目標設定', main: 'ホーム'
+    };
+
+    const Pages = {
+      start() {
+        return `
+          <div class="card">
+            <div class="title">たべきゃらへようこそ</div>
+            <p class="muted">アカウントを作成して、食べたレシピをキャラに食べさせよう！</p>
+            <div class="row" style="margin-top:12px;">
+              <button class="btn btn-outline" id="goLogin">ログイン</button>
+              <button class="btn btn-primary" id="goRegister">新規登録</button>
+            </div>
+          </div>`;
+      },
+      login() {
+        return `
+          <form class="card" id="loginForm">
+            <div class="title">ログイン</div>
+            <div class="field"><label>メールアドレス</label><input name="email" type="email" required /></div>
+            <div class="field"><label>パスワード</label><input name="password" type="password" required /></div>
+            <button class="btn btn-primary btn-block" type="submit">ログイン</button>
+          </form>`;
+      },
+      register() {
+        return `
+          <form class="card" id="registerForm">
+            <div class="title">新規登録</div>
+            <div class="field"><label>メールアドレス</label><input name="email" type="email" required /></div>
+            <div class="field"><label>パスワード</label><input name="password" type="password" minlength="6" required /></div>
+            <button class="btn btn-primary btn-block" type="submit">アカウント作成</button>
+          </form>`;
+      },
+      onboarding() {
+        const s = State.get();
+        return `
+          <form class="card" id="userForm">
+            <div class="title">ユーザー情報</div>
+            <div class="field"><label>ユーザー名</label><input name="username" value="${s.username||''}" required /></div>
+            <div class="field"><label>誕生日</label><input name="birthday" type="date" value="${s.birthday||''}" required /></div>
+            <div class="field"><label>秘密の質問（覚えやすいもの）</label><input name="secret" value="${s.secret||''}" /></div>
+            <button class="btn btn-primary btn-block" type="submit">つぎへ</button>
+          </form>`;
+      },
+      petSelect() {
+        const s = State.get();
+        return `
+          <form class="card" id="petForm">
+            <div class="title">ペットを選ぶ</div>
+            <div class="field">
+              <label>種類</label>
+              <select name="petType" required>
+                <option value="" ${!s.petType?'selected':''}>選択してください</option>
+                <option ${s.petType==='cat'?'selected':''} value="cat">ねこ</option>
+                <option ${s.petType==='dog'?'selected':''} value="dog">いぬ</option>
+                <option ${s.petType==='slime'?'selected':''} value="slime">スライム</option>
+              </select>
+            </div>
+            <button class="btn btn-primary btn-block" type="submit">つぎへ</button>
+          </form>`;
+      },
+      petName() {
+        const s = State.get();
+        return `
+          <form class="card" id="petNameForm">
+            <div class="title">ペットに名前</div>
+            <div class="field"><label>なまえ</label><input name="petName" value="${s.petName||''}" required /></div>
+            <button class="btn btn-primary btn-block" type="submit">つぎへ</button>
+          </form>`;
+      },
+      goal() {
+        const s = State.get();
+        return `
+          <form class="card" id="goalForm">
+            <div class="title">目標を決める</div>
+            <div class="field"><label>食生活の目標</label><input name="dietGoal" placeholder="例: 1日2食は野菜を食べる" value="${s.dietGoal||''}" /></div>
+            <div class="field"><label>記録の目標</label><input name="logGoal" placeholder="例: 毎日1回は記録" value="${s.logGoal||''}" /></div>
+            <button class="btn btn-primary btn-block" type="submit">はじめる</button>
+          </form>`;
+      },
+      main() {
+        const s = State.get();
+        const greet = s.username ? `${s.username}さん` : 'トレーナーさん';
+        const pet = s.petType ? `${s.petType}の` : '';
+        const pname = s.petName || 'ペット';
+        return `
+          <div class="card">
+            <div class="title">${greet}、こんにちは！</div>
+            <p class="muted">${pet}${pname}はお腹ぺこぺこ…🍽️ きょう食べたものを記録して食べさせよう！</p>
+            <div class="field"><label>食べたもの</label><input id="mealInput" placeholder="例: サラダ、味噌汁、鮭" /></div>
+            <div class="row">
+              <button class="btn btn-outline" id="saveMeal">記録する</button>
+              <button class="btn btn-primary" id="feedPet">ペットに食べさせる</button>
+            </div>
+            <div style="margin-top:12px;">
+              <button class="btn btn-danger btn-block" id="resetAll">データ初期化</button>
+            </div>
+          </div>
+        `;
+      }
+    };
+
+    // --- 各ページのイベント ---
+    const attachEvents = {
+      start() {
+        document.getElementById('goLogin').onclick = () => navigate('login');
+        document.getElementById('goRegister').onclick = () => navigate('register');
+      },
+      login() {
+        document.getElementById('loginForm').onsubmit = (e) => {
+          e.preventDefault();
+          // デモ: そのままログイン成功にする
+          navigate('main');
+        }
+      },
+      register() {
+        document.getElementById('registerForm').onsubmit = (e) => {
+          e.preventDefault();
+          const fd = new FormData(e.target);
+          State.set({ email: fd.get('email') });
+          navigate('onboarding');
+        }
+      },
+      onboarding() {
+        document.getElementById('userForm').onsubmit = (e) => {
+          e.preventDefault();
+          const fd = new FormData(e.target);
+          State.set({ username: fd.get('username'), birthday: fd.get('birthday'), secret: fd.get('secret') });
+          navigate('onboarding/pet-select');
+        }
+      },
+      petSelect() {
+        document.getElementById('petForm').onsubmit = (e) => {
+          e.preventDefault();
+          const fd = new FormData(e.target);
+          State.set({ petType: fd.get('petType') });
+          navigate('onboarding/pet-name');
+        }
+      },
+      petName() {
+        document.getElementById('petNameForm').onsubmit = (e) => {
+          e.preventDefault();
+          const fd = new FormData(e.target);
+          State.set({ petName: fd.get('petName') });
+          navigate('onboarding/goal');
+        }
+      },
+      goal() {
+        document.getElementById('goalForm').onsubmit = (e) => {
+          e.preventDefault();
+          const fd = new FormData(e.target);
+          State.set({ dietGoal: fd.get('dietGoal'), logGoal: fd.get('logGoal') });
+          navigate('main');
+        }
+      },
+      main() {
+        document.getElementById('saveMeal').onclick = () => {
+          const v = document.getElementById('mealInput').value.trim();
+          if (!v) return alert('食べたものを入力してね');
+          const s = State.get();
+          const meals = s.meals || [];
+          meals.push({ at: Date.now(), text: v });
+          State.set({ meals });
+          alert('記録したよ！');
+        };
+        document.getElementById('feedPet').onclick = () => {
+          const s = State.get();
+          if (!s.meals || s.meals.length === 0) return alert('まずは食べたものを記録しよう！');
+          alert('もぐもぐ…キャラが少し成長した！(演出はあとで実装)');
+        };
+        document.getElementById('resetAll').onclick = () => {
+          if (confirm('すべてのデータを初期化しますか？')) { State.clear(); navigate('start'); }
+        };
+      }
+    };
+
+    // --- ヘルプ ---
+    document.getElementById('helpBtn').onclick = () => {
+      alert('MVPデモ: ログイン→新規登録→オンボーディング→ホームまで試せます。');
+    };
+
+    window.addEventListener('hashchange', render);
+    render(); // 初回
+
+    // Deep link対応（直接 /onboarding/... などに来たとき）
+    if (!location.hash) navigate('start');
+  </script>
+</body>
+</html>
