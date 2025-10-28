@@ -1,0 +1,33 @@
+<!-- /public/login.html -->
+<!DOCTYPE html><html lang="ja"><head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>たべきゃら | ログイン</title>
+<link rel="stylesheet" href="./assets/styles.css"/></head>
+<body data-page="login">
+<div class="phone"><div class="screen">
+<div class="island" aria-hidden="true"></div>
+<header>
+  <button class="hdr-btn" id="backBtn">戻る</button>
+  <h1>ログイン</h1>
+  <button class="hdr-btn" id="helpBtn">ヘルプ</button>
+</header>
+<main id="app" class="fade">
+  <form class="card" id="loginForm">
+    <div class="title">ログイン</div>
+    <div class="field"><label>メールアドレス</label><input name="email" type="email" required/></div>
+    <div class="field"><label>パスワード</label><input name="password" type="password" required/></div>
+    <button class="btn btn-primary btn-block" type="submit">ログイン</button>
+  </form>
+</main>
+<nav class="tabbar">…（start.htmlと同じ）…</nav>
+</div></div>
+<script type="module">
+import { initChrome, State } from "./assets/common.js";
+initChrome();
+document.getElementById('loginForm').onsubmit = (e)=>{
+  e.preventDefault();
+  // デモ：ログイン成功としてホームへ
+  location.href = "./main.html";
+};
+</script>
+</body></html>

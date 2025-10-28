@@ -1,0 +1,63 @@
+<!-- /public/main.html -->
+<!DOCTYPE html><html lang="ja"><head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>たべきゃら | ホーム</title>
+<link rel="stylesheet" href="./assets/styles.css"/></head>
+<body data-page="main">
+<div class="phone"><div class="screen">
+<div class="island" aria-hidden="true"></div>
+<header>
+  <button class="hdr-btn" id="backBtn">戻る</button>
+  <h1>ホーム</h1>
+  <button class="hdr-btn" id="helpBtn">ヘルプ</button>
+</header>
+<main id="app" class="fade">
+  <div class="card">
+    <div class="title" id="greet">こんにちは！</div>
+    <p class="muted" id="petLine">ペットはお腹ぺこぺこ…🍽️</p>
+    <div class="field"><label>食べたもの</label><input id="mealInput" placeholder="例: サラダ、味噌汁、鮭"/></div>
+    <div class="row">
+      <button class="btn btn-outline" id="saveMeal">記録する</button>
+      <button class="btn btn-primary" id="feedPet">ペットに食べさせる</button>
+    </div>
+    <div style="margin-top:12px;">
+      <button class="btn btn-danger btn-block" id="resetAll">データ初期化</button>
+    </div>
+  </div>
+</main>
+
+<nav class="tabbar">
+      <div class="tab" data-tab="mypage"><div class="ico user"></div><span>My</span></div>
+      <div class="tab" data-tab="accessory"><div class="ico"></div><span>着替え</span></div>
+      <div class="tab active" data-tab="home"><div class="ico home"></div><span>Home</span></div>
+      <div class="tab" data-tab="friends"><div class="ico"></div><span>友だち</span></div>
+      <div class="tab" data-tab="settings"><div class="ico"></div><span>設定</span></div>
+    </nav>
+  </div>
+</div>
+<script type="module">
+import { initChrome, State } from "./assets/common.js";
+initChrome();
+const s = State.get();
+document.getElementById('greet').textContent = (s.username ? `${s.username}さん` : 'トレーナーさん') + '、こんにちは！';
+document.getElementById('petLine').textContent = `${s.petType ? s.petType+'の' : ''}${s.petName||'ペット'}はお腹ぺこぺこ…🍽️`;
+
+document.getElementById('saveMeal').onclick = ()=>{
+  const v = document.getElementById('mealInput').value.trim();
+  if(!v) return alert('食べたものを入力してね');
+  const st = State.get();
+  const meals = st.meals || [];
+  meals.push({ at: Date.now(), text: v });
+  State.set({ meals });
+  alert('記録したよ！');
+};
+document.getElementById('feedPet').onclick = ()=>{
+  const st = State.get();
+  if(!st.meals || st.meals.length===0) return alert('まずは食べたものを記録しよう！');
+  alert('もぐもぐ…キャラが少し成長した！（演出はあとで実装）');
+};
+document.getElementById('resetAll').onclick = ()=>{
+  if(confirm('すべてのデータを初期化しますか？')){ State.clear(); location.href='./start.html'; }
+};
+</script>
+</body></html>
