@@ -12,7 +12,12 @@
       font-family: "Hachi Maru Pop", cursive;
     }
 
-    .hero { display:grid; gap:28px; place-items:center; padding:32px 16px 8px; }
+    .hero { 
+      display:grid; 
+      gap:28px; 
+      place-items:center; 
+      padding:100px 16px 8px; 
+    }
     .app-title {
       font-size: clamp(28px, 6.5vw, 40px);
       letter-spacing: .08em;
@@ -81,11 +86,11 @@
   <div class="phone">
     <div class="screen">
       <div class="island" aria-hidden="true"></div>
-      <header>
+      <!-- <header>
         <button class="hdr-btn" id="backBtn">戻る</button>
         <h1>はじめる</h1>
         <button class="hdr-btn" id="helpBtn">ヘルプ</button>
-      </header>
+      </header> -->
 
       <main id="app" class="fade">
         <section class="hero">
@@ -123,14 +128,14 @@
         </section>
       </main>
 
-      <!-- aタグ版のタブバー（MPA向け／リンクで確実に遷移） -->
-      <nav class="tabbar">
+      
+      <!-- <nav class="tabbar">
         <a class="tab" href="./mypage.html"   data-tab="mypage"><div class="ico user"></div><span>My</span></a>
         <a class="tab" href="./accessory.html" data-tab="accessory"><div class="ico"></div><span>着替え</span></a>
         <a class="tab" href="./main.html"      data-tab="home"><div class="ico home"></div><span>Home</span></a>
         <a class="tab" href="./friends.html"   data-tab="friends"><div class="ico"></div><span>友だち</span></a>
         <a class="tab" href="./settings.html"  data-tab="settings"><div class="ico"></div><span>設定</span></a>
-      </nav>
+      </nav> -->
     </div>
   </div>
 
