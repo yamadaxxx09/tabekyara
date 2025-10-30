@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <link href="https://fonts.googleapis.com/css2?family=Hachi+Maru+Pop&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>たべきゃら | ペットに名前をつける</title>
+  <link rel="stylesheet" href="./assets/styles.css" />
+  <style>
+    body { font-family: "Hachi Maru Pop", cursive; }
+    .wrap {
+        max-width: 560px; 
+        margin: 0 auto; 
+        padding: 80px 24px 24px; 
+        text-align: center; 
+    }
+    .title { font-size: clamp(24px, 6vw, 32px); font-weight: 900; margin-bottom: 8px; }
+    .lead { color:#665; margin-bottom: 20px; }
+    .card { background:#fffaf7; border:2px solid #ffe4d1; border-radius:20px; padding:20px; }
+    .pet-preview { width: 160px; height: 160px; object-fit: contain; display:block; margin:0 auto 12px; border-radius: 50%; background:#fff; border:1px solid #f5d7c6; padding:10px; }
+    .pet-label { color:#664; margin-bottom: 4px; }
+    .name-input { 
+        font-size: 18px; 
+        padding: 12px 14px; 
+        width: 100%;
+        max-width: 150px; 
+        border-radius: 12px; 
+        border: 2px solid #ffd1e1; 
+    }
+    .hint { font-size: 12px; color: #888; margin-top: 6px; }
+    .btn, button.btn {
+      display:inline-block; text-align:center; text-decoration:none; cursor:pointer; border:none;
+      font-family:"Hachi Maru Pop", cursive; font-size:18px; font-weight:600; border-radius:999px; padding:16px 18px;
+    }
+    .btn-primary { background-color:#ffe0cf; border:1px solid #ffd2bc; color:#444; width:100%; margin-top:16px; }
+    .btn:hover, button.btn:hover { transform: translateY(-2px); transition: transform .2s ease; }
+    .error { color:#d33; margin-top:8px; display:none; }
+    .back { margin-top:14px; font-size:14px; color:#888; text-decoration:underline; cursor:pointer; }
+  </style>
+</head>
+<body data-page="pet-name">
+  <div class="phone">
+    <div class="screen">
+      <div class="island" aria-hidden="true"></div>
+      <main id="app" class="fade">
+        <section class="wrap">
+          <div class="title">ペットに名前をつけよう</div>
+          <div class="lead">さっき選んだペットがこちらだよ</div>
+
+          <div class="card">
+            <img id="petImg" class="pet-preview" alt="えらんだペット" src="">
+            <div id="petType" class="pet-label"></div>
+
+            <form id="nameForm" novalidate>
+              <input id="petName" class="name-input" type="text" maxlength="20" placeholder="ペットの名前" required />
+              <div id="err" class="error">1〜20文字で入力してね</div>
+              <button id="submitBtn" class="btn btn-primary" type="submit" disabled>この名前にする</button>
+            </form>
+
+            <div id="backBtn" class="back">← えらび直す</div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script type="module">
+    // UI共通（存在しなくても落ちないようにtry）
+    try {
+      const { initChrome } = await import("./assets/common.js");
+      if (typeof initChrome === "function") initChrome();
+    } catch (e) { console.warn("initChrome読み込み省略:", e); }
+
+    const SELECT_KEY = 'tky.selectedPet';
+    const PROFILE_KEY = 'tky.petProfile';
+
+    // 1) pet-selectで保存した選択を読む
+    let selected = null;
+    try {
+      selected = JSON.parse(localStorage.getItem(SELECT_KEY));
+    } catch {}
+    // クエリに?pet=xxxが来ていたらidだけ上書き（念のため）
+    const q = new URLSearchParams(location.search);
+    const qId = q.get('pet');
+    if (selected && qId) selected.id = qId;
+
+    // ガード：選択が無ければ戻す
+    if (!selected || !selected.id || !selected.img) {
+      location.replace('./onboarding-pet-select.html');
+    }
+
+    // 2) 画面へ反映
+    const imgEl = document.getElementById('petImg');
+    const typeEl = document.getElementById('petType');
+    imgEl.src = selected.img;
+    imgEl.alt = `${selected.label ?? selected.id} のプレビュー`;
+    typeEl.textContent = `えらんだペット：${selected.label ?? selected.id}`;
+
+    // 3) 入力バリデーション
+    const nameInput = document.getElementById('petName');
+    const submitBtn = document.getElementById('submitBtn');
+    const err = document.getElementById('err');
+
+    const validate = () => {
+      const v = nameInput.value.trim();
+      const ok = v.length >= 1 && v.length <= 20;
+      submitBtn.disabled = !ok;
+      err.style.display = ok ? 'none' : 'block';
+      return ok;
+    };
+    nameInput.addEventListener('input', validate);
+
+    // 4) 決定 → プロフィール保存 → 次のページへ
+    document.getElementById('nameForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!validate()) return;
+
+      const profile = {
+        id: selected.id,
+        label: selected.label ?? selected.id,
+        img: selected.img,
+        name: nameInput.value.trim()
+      };
+      try { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); } catch {}
+
+      // 必要ならここで Firebase に保存してから遷移
+      // 例:
+      // const uid = getAuth().currentUser?.uid;
+      // await setDoc(doc(getFirestore(), "users", uid), { pet: profile }, { merge: true });
+
+      location.href = './onboarding-goal.html'; // 次のステップに合わせて変更
+    });
+
+    // 5) えらび直す
+    document.getElementById('backBtn').addEventListener('click', () => {
+      location.href = './onboarding-pet-select.html';
+    });
+  </script>
+</body>
+</html>
