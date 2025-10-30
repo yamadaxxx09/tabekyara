@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>マイページ</title>
+        <link rel="stylesheet" href="assets/common.css" />
+        <link rel="stylesheet" href="assets/mypage.css" />
+    </head>
+<body>
+    <div class="container">
+        <header>
+            <h1>マイページ</h1>
+            <p class="user-id">user ID: tomokin1815 <span class="copy">📋 コピー</span></p>
+            <button class="edit-btn">✏️</button>
+        </header>
+
+        <main>
+            <div class="input-group">
+                <label>🐣</label>
+                <input type="text" placeholder="ユーザー名" id="username" disabled />
+            </div>
+
+            <div class="input-group">
+                <label>🐶</label>
+                <input type="text" placeholder="ペット" id="pet" disabled />
+            </div>
+
+            <div class="input-group">
+                <label>⭐</label>
+                <input type="text" placeholder="目標" id="goal" disabled />
+            </div>
+
+            <div class="button-group">
+                <label>🍲</label>
+                <button class="nav-btn" onclick="location.href='meal.html'">食事記録へ</button>
+            </div>
+
+            <div class="button-group">
+                <label>🛡️</label>
+                <button class="nav-btn" onclick="location.href='badge.html'">バッチへ</button>
+            </div>
+        </main>
+            <footer class="nav">
+            <button>👤</button>
+            <button>👕</button>
+            <button class="active">🏠</button>
+            <button>👥</button>
+            <button>⚙️</button>
+            </footer>
+    </div>
+
+    <script>
+        // ✏️ 編集ボタンで入力欄を切り替え
+        const editBtn = document.getElementById("editBtn");
+        const inputs = document.querySelectorAll("#username, #pet, #goal");
+        let editable = false;
+
+        editBtn.addEventListener("click", () => {
+        editable = !editable;
+        inputs.forEach(input => {
+            input.disabled = !editable;
+            input.style.background = editable ? "#fffaf0" : "#fff";
+        });
+        editBtn.textContent = editable ? "✅" : "✏️";
+        });
+    </script>
+</body>
+</html>
