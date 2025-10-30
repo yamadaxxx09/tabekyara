@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <link href="https://fonts.googleapis.com/css2?family=Hachi+Maru+Pop&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>たべきゃら | ペットをえらぶ</title>
+  <link rel="stylesheet" href="./assets/styles.css" />
+  <style>
+    
+    body {
+      font-family: "Hachi Maru Pop", cursive;
+    }
+
+    .hero { 
+      display:grid; 
+      gap:28px; 
+      place-items:center; 
+      padding:100px 16px 8px; 
+    }
+    .app-title {
+      font-size: clamp(28px, 6.5vw, 40px);
+      letter-spacing: .08em;
+      font-weight: 900;
+      -webkit-text-stroke: 1px rgba(0,0,0,.08);
+      text-shadow: 0 2px 0 rgba(0,0,0,.05);
+    }
+
+    .cta {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+    }
+
+    .cta a {
+      display: inline-block;
+      max-width: 300px;
+      text-align: center;
+      text-decoration: none; 
+    }
+
+    .btn,
+    button.btn {
+    display: inline-block;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+     border: none;
+    font-family: "Hachi Maru Pop", cursive;
+    font-size: 18px;
+    font-weight: 600;
+    border-radius: 999px;
+    padding: 16px 18px;
+
+    }
+
+    .btn-primary {
+      background-color: #ffe0cf;
+      border: 1px solid #ffd2bc;
+      color: #444;
+    }
+
+    .btn:hover,
+      button.btn:hover {
+      transform: translateY(-2px);
+      transition: transform 0.2s ease;
+    }
+
+    .pet-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        justify-items: center;
+        padding: 20px;
+    }
+
+    .pet {
+        background: #fffaf7; 
+        border: 2px solid #ffe4d1;
+        border-radius: 20px;
+        padding: 16px 8px;
+        width: 100%;
+        max-width: 100px; 
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.04);
+        transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+        position: relative; 
+    }
+    .badge {
+        display: none;  
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        font-size: 12px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: #ffe0cf;
+        border: 1px solid #ffd2bc;
+        color: #444;
+    }   
+
+    .pet.selected .badge {
+        display: inline-block; 
+    }
+
+    .pet img {
+        width: 80px; 
+        height: 80px;
+        object-fit: contain;
+        border-radius: 50%;  
+        background-color: #fff;
+        padding: 8px;
+        border: 1px solid #f5d7c6;
+    }
+
+    .pet-name {
+        margin-top: 6px;
+        font-size: 14px;
+        color: #664;
+    }
+
+    .pet.selected {
+        border-color: #ffa980;
+        box-shadow: 0 0 0 3px rgba(255, 169, 128, 0.3);
+        transform: translateY(-4px);
+    }
+
+    .pet.selected img {
+        transform: scale(1.05);
+        border-color: #ffa980;
+    }
+
+    .pet:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    }
+
+  </style>
+</head>
+<body data-page="start">
+  <div class="phone">
+    <div class="screen">
+      <div class="island" aria-hidden="true"></div>
+      <main id="app" class="fade">
+        <section class="hero">
+            <div class="app-title">キャラ選択</div>
+            <div class="lead">いっしょに育てたい子をタップしてね</div>
+        </section>
+
+        <section class="pet-grid" role="list" aria-label="ペット一覧">
+            <button class="pet" role="listitem" data-id="pet1" data-label="ペット1" data-img="./assets/img/pet1.png" aria-pressed="false">
+                <img src="./assets/img/pet1.png" alt="ペット1のイラスト">
+                <div class="pet-name">ペット1</div>
+                <span class="badge">えらび中</span>
+            </button>
+            <button class="pet" role="listitem" data-id="pet2" data-label="ペット2" data-img="./assets/img/pet2.png" aria-pressed="false">
+                <img src="./assets/img/pet2.png" alt="ペット2のイラスト">
+                <div class="pet-name">ペット2</div>
+                <span class="badge">えらび中</span>
+            </button>
+            <button class="pet" role="listitem" data-id="pet3" data-label="ペット3" data-img="./assets/img/pet3.png" aria-pressed="false">
+                <img src="./assets/img/pet3.png" alt="ペット3のイラスト">
+                <div class="pet-name">ペット3</div>
+                <span class="badge">えらび中</span>
+            </button>
+
+            <div class="cta">
+                <button id="nextBtn" class="btn btn-primary" disabled>次へ</button>
+            </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initChrome } from "./assets/common.js";
+    initChrome();
+
+        try {
+          const { initChrome } = await import("./assets/common.js");
+          if (typeof initChrome === "function") initChrome();
+        } catch (e) { console.warn("initChromeの読み込みに失敗:", e); }
+    
+        const $  = (sel, root=document) => root.querySelector(sel);
+        const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+    
+        const pets   = $$('.pet');
+        const nextBtn = $('#nextBtn');
+    
+        let selected = null;
+    
+        try {
+          const saved = JSON.parse(localStorage.getItem('tky.selectedPet'));
+          if (saved?.id) {
+            const el = pets.find(p => p.dataset.id === saved.id);
+            if (el) {
+              markSelected(el, false);
+              selected = saved;
+              nextBtn.disabled = false;
+            }
+          }
+        } catch {}
+    
+        // クリックですぐ選択→保存→次へ活性化
+        pets.forEach(btn => {
+          // 将来フォーム内に入っても誤送信しないよう明示
+          if (!btn.type) btn.type = "button";
+          btn.addEventListener('click', () => {
+            const choice = {
+              id: btn.dataset.id,
+              label: btn.dataset.label,
+              img: btn.dataset.img
+            };
+            markSelected(btn, true);
+            selected = choice;
+            try { localStorage.setItem('tky.selectedPet', JSON.stringify    (choice)); } catch {}
+            nextBtn.disabled = false;
+            console.log("選択:", choice);
+          });
+        });
+    
+        function markSelected(btn, scrollToView) {
+          pets.forEach(p => { p.classList.remove('selected'); p.setAttribute    ('aria-pressed','false'); });
+          btn.classList.add('selected');
+          btn.setAttribute('aria-pressed','true');
+          if (scrollToView) btn.scrollIntoView({ behavior:'smooth',     block:'center' });
+        }
+    
+        // 次へ：クエリ + localStorage の両方で渡す
+        nextBtn.addEventListener('click', () => {
+          const q = selected ? `?pet=${encodeURIComponent(selected.id)}` : '';
+          location.href = `./onboarding-pet-name.html${q}`;
+        });
+    
+
+  </script>
+</body>
+</html>
