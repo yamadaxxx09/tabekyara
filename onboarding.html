@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <link href="https://fonts.googleapis.com/css2?family=Hachi+Maru+Pop&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>たべきゃら | onboarding</title>
+  <link rel="stylesheet" href="./assets/styles.css" />
+  <style>
+    
+    body {
+      font-family: "Hachi Maru Pop", cursive;
+    }
+
+    .hero { 
+      display:grid; 
+      gap:28px; 
+      place-items:center; 
+      padding:100px 16px 8px; 
+    }
+    .app-title {
+      font-size: clamp(28px, 6.5vw, 40px);
+      letter-spacing: .08em;
+      font-weight: 900;
+      -webkit-text-stroke: 1px rgba(0,0,0,.08);
+      text-shadow: 0 2px 0 rgba(0,0,0,.05);
+    }
+
+    .cta {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+    }
+
+    .cta a {
+      display: inline-block;
+      max-width: 300px;
+      text-align: center;
+      text-decoration: none; 
+    }
+
+    .btn,
+    button.btn {
+    display: inline-block;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+     border: none;
+    font-family: "Hachi Maru Pop", cursive;
+    font-size: 18px;
+    font-weight: 600;
+    border-radius: 999px;
+    padding: 16px 18px;
+
+    }
+
+    .btn-primary {
+      background-color: #ffe0cf;
+      border: 1px solid #ffd2bc;
+      color: #444;
+    }
+
+    .btn:hover,
+      button.btn:hover {
+      transform: translateY(-2px);
+      transition: transform 0.2s ease;
+    }
+
+    form {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    label {
+        font-weight: 600;
+        text-align: left;
+    }
+
+    input {
+        width: 85%;
+        padding: 12px;
+        border: 1.5px solid #e5e1de;
+        border-radius: 8px;
+        font-family: 15px;
+        outline: none;
+    }
+
+    input::placeholder {
+        color: #bbb;
+    }
+    select {
+        color:#444;
+    }
+  </style>
+</head>
+<body data-page="start">
+  <div class="phone">
+    <div class="screen">
+      <div class="island" aria-hidden="true"></div>
+      <main id="app" class="fade">
+        <section class="hero">
+          <div class="app-title">アカウント登録</div>
+        <form>
+            <label for="name">名前</label>
+            <input type="name" id="name" placeholder="ニックネームを入力" required>
+
+            <label for="birthday">誕生日</label>
+            <input type="birthday" id="birthday" placeholder="誕生日を入力">
+
+            <label for="security-question">秘密の質問</label>
+            <select id="security-question required">
+                <option value="" disabled selected>質問を選んでください</option>
+                <option value="color">好きな色は？</option>
+                <option value="country">今行きたい国は？</option>
+                <option value="food">好きな食べ物は？</option>
+            </select>
+            <label for="security-answer">質問の答え</label>
+            <input type="text" id="security-answer" placeholder="答えを入力" required>
+            <button type="submit" class="btn btn-primary btn-block btn-fat">次へ</button>
+        </form>
+
+          </div>
+        </section>
+      </main>
+
+    </div>
+  </div>
+
+  <script type="module">
+    import { initChrome } from "./assets/common.js";
+    initChrome();
+  </script>
+</body>
+</html>
