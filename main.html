@@ -169,7 +169,10 @@
               <div class="pet-canvas" id="petCanvas">
                 <div id="petMeta" class="pet-name"></div>
                 <img id="petImg" src="./assets/img/pets/placeholder.png" alt="ペット" decoding="async" loading="lazy">
-                <div class="fx-layer" id="fx"></div>
+                <div class="fx-layer" id="fx">
+                  <img id="sparkleFx" src="./assets/gif/kirakira.gif"
+       alt="" style="position:absolute; inset:0; width:100%; height:100%; object-fit:contain; display:none;">
+                </div>
                 <!-- 画像の上に動画（再生時だけ表示） -->
                 <video id="petAnim"
                        playsinline
@@ -180,8 +183,6 @@
                   <!-- WebM優先＋MP4フォールバック（あれば） -->
                   <!-- ソースはJSで切り替えるので最初は空でOK -->
                 </video>
-
-              
                 <div class="row-overlay">
                   <button id="feedBtn" class="btn" type="button">🍙 ごはんをあげる</button>
                 </div>
@@ -252,15 +253,25 @@
   }
 
   (function render(){
-    const imgEl=$('#petImg');
-    const nameEl=$('#petMeta');
-    if(!imgEl) return;
-    if(!pet){ imgEl.src=PLACEHOLDER; if(nameEl) nameEl.textContent=''; return; }
-    const typeLabel=pet.label||pet.id||'ペット';
+  const imgEl=$('#petImg');
+  const nameEl=$('#petMeta');
+  if(!imgEl) return;
+
+  // すでに見た目が決まっているなら初期表示はスキップ（後でapplyAppearanceが上書きする）
+  const apRaw = localStorage.getItem('tky.appearance');
+  if (apRaw) {
+    const typeLabel=pet?.label||pet?.id||'ペット';
     if(nameEl) nameEl.textContent = petName ? `${petName}（${typeLabel}）` : `${typeLabel}`;
-    imgEl.alt=`${typeLabel} のプレビュー`;
-    resolveAndLoad(pet.img||PLACEHOLDER,imgEl);
-  })();
+    return;
+  }
+
+  if(!pet){ imgEl.src=PLACEHOLDER; if(nameEl) nameEl.textContent=''; return; }
+  const typeLabel=pet.label||pet.id||'ペット';
+  if(nameEl) nameEl.textContent = petName ? `${petName}（${typeLabel}）` : `${typeLabel}`;
+  imgEl.alt=`${typeLabel} のプレビュー`;
+  resolveAndLoad(pet.img||PLACEHOLDER,imgEl);
+})();
+
 
   // ===== モーダル制御 =====
   const modal = $('#foodModal');
@@ -285,8 +296,8 @@
   modal?.addEventListener('click', (e)=>{ if(e.target === modal) closeModal(); });
 
   // ===== もぐもぐ再生だけやる（1回表示→静止画へ戻す） =====
-// ファイル場所： assets/img/mogumogu.gif
-const CHEW_SRC = { gif: './assets/img/mogumogu.gif' };
+// ファイル場所： assets/gif/mogumogu.gif
+const CHEW_SRC = { gif: './assets/gif/mogumogu.gif' };
 let chewing = false;
 
 async function playChewOnce() {
@@ -333,6 +344,228 @@ async function playChewOnce() {
        主菜: ${mapJP[data.protein]} / 野菜: ${mapJP[data.veggie]} / 主食: ${mapJP[data.carb]}`;
     logEl?.prepend(div);
   }
+  /* ========= ここから “日次判定 + 見た目維持” の追加コード ========= */
+
+// --- 設定（しきい値・連続日数・演出時間ms） ---
+const ENERGY_SCORE = { low: 1, mid: 2, high: 3 }; // 量スコア（主菜/主食に効く）
+const VEGGIE_BONUS = { low: 0, mid: 1, high: 2 }; // 野菜ボーナス
+const FAT_THRESHOLD   = 8;  // これ以上で「多い」→ fat
+const THIN_THRESHOLD  = 3;  // これ未満で「少ない」
+const THIN_STREAK_N   = 2;  // 少ない日が連続N日でthin
+const SPARKLE_RULE = (p, v, c) => (
+  // バランス判定例：全部mid か、野菜high かつ 他がmid以下
+  (p==='mid' && v==='mid' && c==='mid') ||
+  (v==='high' && (p!=='high' && c!=='high'))
+);
+
+const TRANSITION_GIF_MS = 2200; // to_fat / to_thin のGIF長さ（mp4なら ended でOK）
+
+// --- ストレージキー ---
+const KEY_MEAL_LOG   = 'tky.mealLog';     // { 'YYYY-MM-DD': [ {protein, veggie, carb, ts}, ... ] }
+const KEY_APPEARANCE = 'tky.appearance';  // { petId, state, since:'YYYY-MM-DD', lastEval:'YYYY-MM-DD' }
+const KEY_PET        = 'tky.pet';
+
+// --- ユーティリティ（日付はローカル基準でOK） ---
+const fmtDate = (d=new Date()) => d.toISOString().slice(0,10);
+const yesterdayStr = () => {
+  const d = new Date(); d.setDate(d.getDate()-1);
+  return fmtDate(d);
+};
+
+// --- ログ保存（既存logUIに加えて日次集計のために保存） ---
+function saveMealForToday(entry){ // entry: {protein, veggie, carb}
+  const raw = localStorage.getItem(KEY_MEAL_LOG);
+  const log = raw ? JSON.parse(raw) : {};
+  const today = fmtDate();
+  if(!log[today]) log[today] = [];
+  log[today].push({...entry, ts: Date.now()});
+  localStorage.setItem(KEY_MEAL_LOG, JSON.stringify(log));
+}
+
+// 既存の foodForm submit の中で、ログ追加の直後に呼ぶとよい：
+// saveMealForToday(data);
+
+// --- 前日を集計して外見を決める ---
+function evaluateDay(dayStr){ // return {state:'normal|fat|thin|sparkle', energy, info }
+  const raw = localStorage.getItem(KEY_MEAL_LOG);
+  const log = raw ? JSON.parse(raw) : {};
+  const items = log[dayStr] || [];
+  if(items.length===0) return { state:'normal', energy:0, info:{ reason:'no_meal' } };
+
+  // 1日の合計スコア
+  let energy = 0;
+  let balanced = false;
+  for(const it of items){
+    energy += (ENERGY_SCORE[it.protein]||0) + (ENERGY_SCORE[it.carb]||0) + (VEGGIE_BONUS[it.veggie]||0);
+    if (SPARKLE_RULE(it.protein, it.veggie, it.carb)) balanced = true;
+  }
+
+  // 仮のルール：balancedなら sparkle を最優先
+  if (balanced) return { state:'sparkle', energy, info:{ reason:'balanced' } };
+  if (energy >= FAT_THRESHOLD) return { state:'fat', energy, info:{ reason:'high_energy' } };
+
+  // thin は “少ない日” が連続 N 日
+  const isThinDay = energy < THIN_THRESHOLD;
+  if (isThinDay) {
+    const streak = countThinStreakEndingAt(dayStr);
+    if (streak >= THIN_STREAK_N) return { state:'thin', energy, info:{ reason:'thin_streak', streak } };
+  }
+
+  return { state:'normal', energy, info:{ reason:'default' } };
+}
+
+function countThinStreakEndingAt(dayStr){
+  const raw = localStorage.getItem(KEY_MEAL_LOG);
+  const log = raw ? JSON.parse(raw) : {};
+  let streak = 0;
+  let d = new Date(dayStr);
+  // 後ろ向きに “少ない日” を数える
+  for(;;){
+    const key = fmtDate(d);
+    const items = log[key] || [];
+    let energy = 0;
+    for(const it of items){
+      energy += (ENERGY_SCORE[it.protein]||0) + (ENERGY_SCORE[it.carb]||0) + (VEGGIE_BONUS[it.veggie]||0);
+    }
+    if (items.length>0 && energy < THIN_THRESHOLD){
+      streak += 1;
+      d.setDate(d.getDate()-1);
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
+
+// --- 見た目状態の保存/取得 ---
+function getAppearance(){
+  const raw = localStorage.getItem(KEY_APPEARANCE);
+  return raw ? JSON.parse(raw) : null;
+}
+function setAppearance(obj){
+  localStorage.setItem(KEY_APPEARANCE, JSON.stringify(obj));
+}
+
+// --- 画像/アニメの適用 ---
+const sparkleFx = document.getElementById('sparkleFx');
+
+function petIdOrDefault(){
+  const pet = loadJSON(KEY_PET,null);
+  return pet?.id || 'pet'; // デフォルトid
+}
+
+function assetExists(path){
+  // 画像は 404 でも <img> は event で拾えるが、ここは“試し差し替え”に任せる簡易運用
+  return path; // そのまま返して候補にする（失敗時は onerror でフォールバック）
+}
+
+function staticSpriteFor(state){
+  // いまの配置： ./assets/fat.jpg, ./assets/thin.jpg, ./assets/kirakira.jpg
+  switch(state){
+    case 'fat':    return './assets/fat.jpg';
+    case 'thin':   return './assets/thin.jpg';
+    case 'sparkle':return './assets/kirakira.jpg'; // 無ければ PLACEHOLDER に変更OK
+    default:       return './assets/kirakira.jpg';
+  }
+}
+
+function transitionAnimFor(state){ // ./assets/gif/ 配下
+  if (state==='fat')  return { gif: './assets/gif/fat.gif',  ms: TRANSITION_GIF_MS };
+  if (state==='thin') return { gif: './assets/gif/thin.gif', ms: TRANSITION_GIF_MS };
+  return null;
+}
+
+function transitionAnimFor(state){ // ./assets/gif/ 配下
+  if (state==='fat')  return { gif: './assets/gif/fat.gif',  ms: TRANSITION_GIF_MS };
+  if (state==='thin') return { gif: './assets/gif/thin.gif', ms: TRANSITION_GIF_MS };
+  return null;
+}
+
+async function applyAppearance(state, {playTransitionIfAny=false}={}){
+  // sparkleはオーバーレイ常時ON/OFF
+  sparkleFx.style.display = (state==='sparkle') ? 'block' : 'none';
+
+  const targetStatic = staticSpriteFor(state);
+
+  // fat/thin へ“今日初めて”変わる時だけ遷移アニメを1回表示（GIF想定）
+  if (playTransitionIfAny && (state==='fat' || state==='thin')) {
+    const trans = transitionAnimFor(state);
+    if (trans?.gif) {
+      const originalSrc = petImg.src;
+      petImg.src = trans.gif;
+      await new Promise(r => setTimeout(r, trans.ms)); // GIFはended取れないので時間で戻す
+      petImg.src = targetStatic;
+      return;
+    }
+  }
+
+  // 通常は静止画像へ
+  petImg.src = targetStatic;
+}
+
+// --- 起動時：前日を評価して状態を更新（初回のみ） ---
+(function dailyEvaluateIfNeeded(){
+  const today  = fmtDate();
+  const yest   = yesterdayStr();
+  const ap     = getAppearance();
+  const id     = petIdOrDefault();
+
+  if (!ap || ap.lastEval !== today) {
+    // 前日について判定して今日の見た目に反映
+    const result = evaluateDay(yest);
+    const state  = result.state;
+
+    const prevState = ap?.state;
+    const changedToday = (state !== prevState);
+
+    setAppearance({
+      petId: id,
+      state,
+      since: (changedToday ? today : (ap?.since || today)),
+      lastEval: today
+    });
+
+    // 変わった時だけ遷移アニメを再生
+    applyAppearance(state, { playTransitionIfAny: changedToday });
+  } else {
+    // すでに今日評価済みなら保存された見た目を再適用
+    applyAppearance(ap.state, { playTransitionIfAny: false });
+  }
+})();
+
+// --- 食事フォーム submit 時：日次ログに加算（既存の処理に1行追加） ---
+// 既存の foodForm submit ハンドラの中（addLogRow の前後お好きな位置）に：
+// saveMealForToday(data);
+
+/* ========= 追加コードここまで ========= */
+// 画像の読み込みエラーを可視化
+const dbg = (msg)=>console.log('[pet-img]', msg);
+petImg.addEventListener('error', ()=>dbg('ERROR loading '+petImg.src));
+petImg.addEventListener('load',  ()=>dbg('LOADED '+petImg.src));
+
+// applyAppearance の末尾にログを入れると確認しやすい
+async function applyAppearance(state, {playTransitionIfAny=false}={}){
+  sparkleFx.style.display = (state==='sparkle') ? 'block' : 'none';
+  const targetStatic = staticSpriteFor(state);
+
+  if (playTransitionIfAny && (state==='fat' || state==='thin')) {
+    const trans = transitionAnimFor(state);
+    if (trans?.gif) {
+      console.log('[appearance] transition', state, '→', trans.gif);
+      const originalSrc = petImg.src;
+      petImg.src = trans.gif;
+      await new Promise(r => setTimeout(r, trans.ms));
+      petImg.src = targetStatic;
+      console.log('[appearance] static →', targetStatic);
+      return;
+    }
+  }
+
+  console.log('[appearance] static →', targetStatic);
+  petImg.src = targetStatic;
+}
+
+
 </script>
 
 </body>

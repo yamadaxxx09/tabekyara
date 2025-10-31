@@ -102,24 +102,27 @@
       <main id="app" class="fade">
         <section class="hero">
           <div class="app-title">アカウント登録</div>
-        <form>
+        <form id="onboarding-form">
             <label for="name">名前</label>
-            <input type="name" id="name" placeholder="ニックネームを入力" required>
+            <input type="text" id="name" name="name" placeholder="ニックネームを入力" required>
 
             <label for="birthday">誕生日</label>
-            <input type="birthday" id="birthday" placeholder="誕生日を入力">
+            <input type="date" id="birthday" name="birthday" placeholder="誕生日を入力">
 
             <label for="security-question">秘密の質問</label>
-            <select id="security-question required">
-                <option value="" disabled selected>質問を選んでください</option>
-                <option value="color">好きな色は？</option>
-                <option value="country">今行きたい国は？</option>
-                <option value="food">好きな食べ物は？</option>
+            <select id="security-question" name="securityQuestion" required>
+              <option value="" disabled selected>質問を選んでください</option>
+              <option value="color">好きな色は？</option>
+              <option value="country">今行きたい国は？</option>
+              <option value="food">好きな食べ物は？</option>
             </select>
+
             <label for="security-answer">質問の答え</label>
-            <input type="text" id="security-answer" placeholder="答えを入力" required>
+            <input type="text" id="security-answer" name="securityAnswer" placeholder="答えを入力" required>
+
             <button type="submit" class="btn btn-primary btn-block btn-fat">次へ</button>
         </form>
+
 
           </div>
         </section>
@@ -131,6 +134,32 @@
   <script type="module">
     import { initChrome } from "./assets/common.js";
     initChrome();
+    
+  const form = document.getElementById("onboarding-form");
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    // 値を取得
+    const name = document.getElementById("name").value.trim();
+    const birthday = document.getElementById("birthday").value; // date型は空文字か"YYYY-MM-DD"
+    const question = document.getElementById("security-question").value;
+    const answer = document.getElementById("security-answer").value.trim();
+
+    // 簡易バリデーション（必要なら強化OK）
+    if (!name || !question || !answer) {
+      alert("未入力の項目があります。");
+      return;
+    }
+
+    // 保存（キーはプロジェクトで使っている接頭辞に合わせています）
+    const profile = { name, birthday, question, answer, ts: Date.now() };
+    try {
+      localStorage.setItem("tky.userProfile", JSON.stringify(profile));
+    } catch {}
+
+    // ペット選択へ
+    window.location.href = "./onboarding-pet-select.html";
+  });
   </script>
 </body>
 </html>
