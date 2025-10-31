@@ -34,12 +34,7 @@
     }
     .sub { color:#886; font-size:12px; }
 
-    .pet-row { display:flex; align-items:center; gap:12px; }
-    .pet-row img { width:56px; height:56px; object-fit:contain; border-radius:12px; background:#fff; border:1px solid #ffd2bc; }
-    .pet-meta { display:grid; gap:2px; }
-    .pet-name { font-size:16px; }
-    .pet-type { font-size:12px; color:#886; }
-
+    /* 目標など共通 */
     .goals { display:grid; gap:8px; }
     .goal-chip {
       background:#fff; border:1px solid #f5d7c6; border-radius:999px;
@@ -59,6 +54,39 @@
     .hint { text-align:center; color:#886; font-size:12px; margin-top:-4px; }
 
     .empty { color:#b88; font-size:14px; }
+
+    /* ===== ペットカード専用（枠・背景・影なし / 左大画像 右ボタン）===== */
+    .card--pet {
+        background:#fffaf7;
+        border:2px solid #ffe4d1;
+        border-radius:16px;
+        box-shadow:0 3px 6px rgba(0,0,0,.04);
+        padding:12px;
+    }
+    .pet-row {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+    }
+    .pet-figure {
+      display:flex;
+      justify-items:center;
+      gap: 2px !important; 
+    }
+    /* 既存の .pet-row img ルールより強く指定（IDで上書き） */
+    #petImg {
+      width: min(42vw, 140px);
+      height: min(42vw, 140px);
+      object-fit: contain;
+      border: none;          /* 枠なし */
+      background: transparent;
+      display: block;
+    }
+    .pet-type {
+      font-size: 13px;
+      color: #886;
+    }
   </style>
 </head>
 <body data-page="onboarding-welcome">
@@ -72,13 +100,14 @@
         </section>
 
         <section class="confirm-wrap" aria-label="入力内容の確認">
-          <!-- ペット -->
-          <article class="card" id="petCard" aria-live="polite">
-            <h3>ペット</h3>
-            <div class="pet-row" id="petRow">
-              <!-- 画像 / 情報をJSで差し込み -->
-            </div>
-            <div class="row-actions">
+          <!-- ペット（枠なし＆左右レイアウト） -->
+          <article class="card card--pet" id="petCard" aria-live="polite">
+            <h3>ペットの種類</h3>
+            <div class="pet-row">
+              <div class="pet-figure">
+                <img id="petImg" src="./assets/img/pets/placeholder.png" alt="えらんだペット">
+                <div class="pet-type" id="petType">ペットが未選択です</div>
+              </div>
               <a class="btn btn-ghost" href="./onboarding-pet-select.html" aria-label="ペットを変更する">変更する</a>
             </div>
           </article>
@@ -92,14 +121,14 @@
             </div>
           </article>
 
-          <!-- 目標 -->
+          <!-- 目標（そのまま） -->
           <article class="card" id="goalCard" aria-live="polite">
             <h3>目標</h3>
             <div class="goals" id="goalList"></div>
             <div class="row-actions">
               <a class="btn btn-ghost" href="./onboarding-goal.html" aria-label="目標を変更する">変更する</a>
             </div>
-            <div class="hint">※ 目標はあとからマイページでも編集できるようにしておくと親切</div>
+            <div class="hint">※目標はあとからマイページからでも編集できるよ!</div>
           </article>
         </section>
 
@@ -111,7 +140,7 @@
   </div>
 
   <script type="module">
-    // ====== ストレージキー（必要なら既存実装に合わせて変更してね） ======
+    // ====== ストレージキー ======
     const KEY_PET      = 'tky.pet';       // 例: { id:'cat', label:'ねこ', img:'./assets/img/pets/cat.png' }
     const KEY_PET_NAME = 'tky.petName';   // 例: 'もち'
     const KEY_GOALS    = 'tky.goals';     // 例: ['毎日朝ごはん','週3回やさい']
@@ -122,7 +151,7 @@
       if (typeof initChrome === "function") initChrome();
     } catch (e) { console.warn("initChromeの読み込みに失敗:", e); }
 
-    const $  = (s, r=document)=>r.querySelector(s);
+    const $ = (s, r=document)=>r.querySelector(s);
 
     // ====== データ復元 ======
     function loadJSON(key, fallback=null){
@@ -132,28 +161,29 @@
       } catch { return fallback; }
     }
 
-    const pet      = loadJSON(KEY_PET, null);
-    const petName  = localStorage.getItem(KEY_PET_NAME) || ''; // 名前は文字列保存の想定
-    const goals    = loadJSON(KEY_GOALS, []);
+    const pet     = loadJSON(KEY_PET, null);
+    const petName = localStorage.getItem(KEY_PET_NAME) || ''; // 文字列保存
+    const goals   = loadJSON(KEY_GOALS, []);
 
-    // ====== ペット表示 ======
+    // ====== ペット表示（IDは出さない） ======
     (function renderPet(){
-      const slot = $('#petRow');
-      if (!slot) return;
+      const imgEl  = $('#petImg');
+      const typeEl = $('#petType');
+
+      if (!imgEl || !typeEl) return;
 
       if (!pet) {
-        slot.innerHTML = `<div class="empty">未選択です。<br>「変更する」からえらんでね。</div>`;
+        imgEl.src = './assets/img/pets/placeholder.png';
+        imgEl.alt = 'ペット未選択';
+        typeEl.textContent = 'ペットが未選択です';
         return;
       }
       const imgSrc = pet.img || './assets/img/pets/placeholder.png';
       const type   = pet.label || pet.id || 'ペット';
-      slot.innerHTML = `
-        <img src="${imgSrc}" alt="${type}">
-        <div class="pet-meta">
-          <div class="pet-type">${type}</div>
-          <div class="sub">ID: ${pet.id ?? '-'}</div>
-        </div>
-      `;
+
+      imgEl.src = imgSrc;
+      imgEl.alt = `${type} のプレビュー`;
+      typeEl.textContent = type;
     })();
 
     // ====== ペット名表示 ======
@@ -180,7 +210,6 @@
 
     // ====== はじめる → mainへ ======
     $('#startBtn')?.addEventListener('click', ()=>{
-      // 最低限のバリデーション（ペット・名前・目標のいずれか欠けていればアラート）
       const missing = [];
       if (!pet) missing.push('ペット');
       if (!petName) missing.push('ペットの名前');
@@ -191,8 +220,8 @@
         return;
       }
 
-      // 必要ならここで初期ステータスをまとめて保存してもOK
-      // 例: localStorage.setItem('tky.profile', JSON.stringify({ pet, petName, goals }))
+      // 必要ならまとめ保存:
+      // localStorage.setItem('tky.profile', JSON.stringify({ pet, petName, goals }));
 
       location.href = './main.html';
     });
