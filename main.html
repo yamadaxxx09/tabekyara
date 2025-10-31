@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -8,189 +7,155 @@
   <link href="https://fonts.googleapis.com/css2?family=Hachi+Maru+Pop&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./assets/styles.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/css/all.min.css">
-
-  <!-- フォント & 既存CSS -->
-  <link href="https://fonts.googleapis.com/css2?family=Hachi+Maru+Pop&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./assets/styles.css" />
   <style>
-    :root{
-      --top-gap: clamp(16px, 6vh, 56px);
-    }
+    :root{ --top-gap: clamp(16px, 6vh, 56px); --overlap: 10px; }
+
     html,body{
-      height:100%;
-      margin:0;
+      height:100%; margin:0;
       font-family:"Hachi Maru Pop",cursive;
       background:var(--bg);
     }
 
-    /* 画面をスマホ高に合わせる（アドレスバー影響を避けるsvh） */
-    .phone, .screen{
-      min-height:100svh;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between; 
+    /* 1画面固定・スクロールなし */
+    .phone,.screen{
+      height:100svh; display:flex; flex-direction:column;
+      overflow:hidden;
     }
-    .screen{ display:flex; flex-direction:column; }
 
-    /* コンテンツは下部タブに隠れないようパディングを足す */
     main{
-      flex:1;
-      display:flex;
-      flex-direction:column;
+      flex:1; display:flex; flex-direction:column; align-items:center;
       justify-content:flex-start;
-      align-items:center;
-      padding:8px 16px;
+      padding:8px 16px calc(var(--tabbar-h) + env(safe-area-inset-bottom));
       box-sizing:border-box;
-      overflow:hidden !important; /* スクロールをなくす */
+      overflow:hidden;
     }
 
-    .hero{ display:grid; place-items:center; text-align:center; gap:6px; padding:16px 16px 4px; margin-top: 50px;}
+    .hero{ display:grid; place-items:center; text-align:center; gap:6px; padding:16px 16px 4px; margin-top:44px; }
     .app-title{
-      
-      font-size: clamp(22px, 5.2vw, 30px);
-      font-weight: 900;
-      letter-spacing: .08em;
-      -webkit-text-stroke: 1px rgba(0,0,0,.06);
-      line-height: 1.05;      
+      font-size:clamp(22px,5.2vw,30px); font-weight:900; letter-spacing:.08em;
+      -webkit-text-stroke:1px rgba(0,0,0,.06); line-height:1.05;
     }
     .lead{ color:var(--sub); font-size:13px; }
 
-    .main-wrap{ 
-      display:grid; 
-      gap:12px; 
-      padding:25px 16px 16px; 
-    }
+    .main-wrap{ display:grid; gap:12px; padding:20px 16px 0; }
 
-    .card{
-      background: none;   
-      border: none;       
-      box-shadow: none;      
-      border-radius: 0;       
-      display: grid;
-      gap: 10px;
-      margin-top: 20px;
-    }
+    .card{ background:none; border:none; box-shadow:none; border-radius:0; display:grid; gap:10px; margin-top:6px; }
 
-
-    /* ペット表示 */
-    .pet-stage{ 
-      display: grid;
-      gap: 2px !important;
-      justify-items: center;
-      text-align: center;
-      position: relative;
-      margin-bottom: 0 !important;
-    }
-    .pet-name {
-      position: absolute;
-      top: -10px; 
-      font-size: clamp(18px, 4.2vw, 22px);
-      color: #A3A649; 
-      letter-spacing: .03em;
-    }
-
-    /* 画面内に収まるよう少し小さめ＆比率固定 */
-    .pet-canvas{
-      width:min(65vw,260px);
-      aspect-ratio:1/1;
-      max-height:45vh;
-      display:grid;
-      place-items:center;
+    /* ===== ペット＆ボタン重ね ===== */
+    .pet-stage{
       position:relative;
-      overflow:visible;  
+      display:grid;
+      justify-items:center;
+      text-align:center;
+      overflow:visible; /* はみ出しを見せる */
+      gap:0;           /* 余白ゼロ */
+    }
+
+    .pet-name{
+      position:absolute; top:8px; font-size:clamp(18px,4.2vw,22px);
+      color:#A3A649; letter-spacing:.03em; z-index:3;
+    }
+
+    .pet-canvas{
+      position:relative;         /* ← ボタンの基準にする */
+      display:grid; place-items:center;
+      width:fit-content;
     }
 
     #petCanvas{
-      width: min(86dvw, 440px) !important;  /* 画面の実測幅に対して拡大 */
-      max-height: 56vh !important;
-      background: none; border: none; box-shadow: none; border-radius: 0;
-      overflow: visible;
+      width:min(82dvw,400px) !important;
+      max-height:54vh !important;
+      margin:0 auto 0 !important; /* 下余白ゼロ（重ねるので不要） */
+      background:none; border:none; box-shadow:none; border-radius:0;
+      display:grid; place-items:center; position:relative;
     }
+
     .pet-canvas img{
-      width:100%; 
-      height:auto; 
-      object-fit:contain; 
-      display:block; 
-      transform-origin:50% 80%; 
+      width:100%; height:auto; object-fit:contain; display:block; transform-origin:50% 80%;
     }
 
-    .fx-layer{ position:absolute; inset:0; pointer-events:none; }
+    .fx-layer{ position:absolute; inset:0; pointer-events:none; z-index:2; }
 
-    #feedBtn {
-      font-size: 19px;
-      padding: 14px 24px;
-      margin-top: 4px !important;
+
+    /* ここが重ねる肝：画像の中に絶対配置 */
+    .row-overlay{
+      position:absolute;
+      left:0; right:0;
+      bottom:calc(var(--overlap) * -1); /* 下端から食い下がる量（重なり） */
+      display:flex; justify-content:center;
+      z-index:4; /* 画像より上 */
+      pointer-events:auto;
     }
 
-    /* アニメーション（前回と同じ） */
-    @keyframes chubby-bounce { 0%{transform:scale(1)} 20%{transform:scale(1.06,1.03) translateY(-2px)} 40%{transform:scale(1.1,1.06)} 60%{transform:scale(1.08,1.05)} 80%{transform:scale(1.06,1.03)} 100%{transform:scale(1)} }
-    @keyframes slim-sway { 0%{transform:scale(1)} 20%{transform:scale(.94,.96) rotate(-1deg)} 40%{transform:scale(.92,.95) rotate(1deg)} 60%{transform:scale(.93,.95) rotate(-.6deg)} 80%{transform:scale(.95,.97) rotate(.6deg)} 100%{transform:scale(1)} }
-    @keyframes sparkle-fall { 0%{transform:translateY(-20%) scale(.6);opacity:0} 10%{opacity:1} 100%{transform:translateY(120%) scale(1);opacity:0} }
-    .fatting img{ animation: chubby-bounce .9s ease; }
-    .slimming img{ animation: slim-sway 1.1s ease; }
-    .sparkle{
-      position:absolute; top:-10%; width:10px; height:10px; border-radius:50%;
-      background: radial-gradient(circle at 30% 30%, #fff 0 20%, #ffd9c6 22% 60%, transparent 62%);
-      filter: drop-shadow(0 0 6px rgba(255,180,150,.6));
-      animation: sparkle-fall 1.6s linear forwards;
+    #feedBtn{
+      font-size:19px; padding:12px 22px; margin:0 !important;
+      box-shadow:0 4px 14px rgba(0,0,0,.12);
     }
-
-    .row-center{ display:flex; justify-content:center; }
-    .btn,button.btn{
-      display:inline-grid; place-items:center; gap:6px; cursor:pointer;
-      font-family:"Hachi Maru Pop",cursive; font-size:18px; font-weight:700;
-      padding:12px 20px; border-radius:999px; border:1px solid var(--pri-line);
-      background:var(--pri); color:var(--ink);
-      box-shadow: 0 2px 0 rgba(0,0,0,.05), 0 4px 14px rgba(255,160,120,.15);
-    }
-    .btn:disabled{ opacity:.6; cursor:not-allowed; }
 
     .log{ font-size:12px; color:var(--sub); display:grid; gap:6px; max-height:22vh; overflow:auto; }
     .log-item{ background:#fff; border:1px dashed var(--line); border-radius:8px; padding:6px 8px; }
 
-    /* タブバー：画面最下部に固定（さらに下へ寄せる） */
+    /* タブバー */
     .tabbar{
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 6px;
-      background: #fff;
-      border-top: 2px solid var(--line2);
-      padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
-      height: var(--tabbar-h);
-      box-sizing: border-box;
+      position:absolute; bottom:0; left:0; width:100%;
+      display:grid; grid-template-columns:repeat(5,1fr); gap:6px;
+      background:#fff; border-top:2px solid var(--line2);
+      padding:6px 6px calc(6px + env(safe-area-inset-bottom));
+      height:var(--tabbar-h); box-sizing:border-box;
+      flex-shrink:0;
     }
     .tabbar .tab{
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: #fff7f1;
-      font-family: "Hachi Maru Pop", cursive;
-      font-size: 11px;
-      color: #444;
-      cursor: pointer;
-      padding: 8px 4px 6px;
+      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+      border:1px solid var(--line); border-radius:14px; background:#fff7f1;
+      font-size:11px; color:#444; cursor:pointer; padding:8px 4px 6px;
     }
-    .tabbar .tab i{
-      font-size: 20px;
-      line-height: 1;
-    }
-    .tabbar .tab.active{
-      background: #ffe6d7;
-      border-color: #ffccb3;
-      color: #A3A649;
-    }
+    .tabbar .tab i{ font-size:20px; line-height:1; }
+    .tabbar .tab.active{ background:#ffe6d7; border-color:#ffccb3; color:#A3A649; }
     .tabbar .tab:focus-visible{ outline:2px solid #ffb999; outline-offset:2px; }
-
   </style>
 </head>
 <body data-page="main">
   <div class="phone">
     <div class="screen">
       <div class="island" aria-hidden="true"></div>
+      <!-- ごはん選択モーダル -->
+      <div id="foodModal" aria-hidden="true"
+          style="position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.25); z-index:9999;">
+        <div role="dialog" aria-modal="true" aria-labelledby="foodTitle"
+            style="background:#fff; border:2px solid var(--line2); border-radius:16px; width:min(92vw,520px); max-width:520px; padding:16px; box-shadow:0 14px 40px rgba(0,0,0,.18);">
+          <h3 id="foodTitle" style="margin:0 0 8px; font-size:18px;">ごはんをえらぶ</h3>
+
+          <p style="margin:0 0 8px; color:var(--sub); font-size:13px;">今日のごはんのバランスを教えてね</p>
+
+          <form id="foodForm" style="display:grid; gap:10px; font-size:14px;">
+            <fieldset style="border:none; padding:0; margin:0;">
+              <legend style="font-weight:700; margin-bottom:6px;">主菜（タンパク質）</legend>
+              <label><input type="radio" name="protein" value="low"  required> すくなめ（豆腐・卵少し）</label>
+              <label><input type="radio" name="protein" value="mid"> ふつう（鶏・魚など適量）</label>
+              <label><input type="radio" name="protein" value="high"> おおめ（牛・豚・揚げ物たっぷり）</label>
+            </fieldset>
+
+            <fieldset style="border:none; padding:0; margin:0;">
+              <legend style="font-weight:700; margin-bottom:6px;">野菜・果物</legend>
+              <label><input type="radio" name="veggie" value="low"  required> すくなめ</label>
+              <label><input type="radio" name="veggie" value="mid"> ふつう</label>
+              <label><input type="radio" name="veggie" value="high"> たっぷり</label>
+            </fieldset>
+
+            <fieldset style="border:none; padding:0; margin:0;">
+              <legend style="font-weight:700; margin-bottom:6px;">主食（ごはん・パン等）</legend>
+              <label><input type="radio" name="carb" value="low"  required> すくなめ</label>
+              <label><input type="radio" name="carb" value="mid"> ふつう</label>
+              <label><input type="radio" name="carb" value="high"> おおめ</label>
+            </fieldset>
+
+            <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:8px;">
+              <button type="button" id="foodCancel" class="btn" style="background:#fff7f1; border:1px solid var(--line);">やめる</button>
+              <button type="submit" class="btn" id="foodOK">OK</button>
+            </div>
+          </form>
+        </div>
+      </div>
 
       <main id="app" class="fade">
         <section class="hero">
@@ -202,13 +167,24 @@
           <article class="card">
             <div class="pet-stage">
               <div class="pet-canvas" id="petCanvas">
-                <img id="petImg" src="./assets/img/pets/placeholder.png" alt="ペット">
+                <div id="petMeta" class="pet-name"></div>
+                <img id="petImg" src="./assets/img/pets/placeholder.png" alt="ペット" decoding="async" loading="lazy">
                 <div class="fx-layer" id="fx"></div>
-              </div>
-              <div id="petMeta" class="pet-name"></div>
+                <!-- 画像の上に動画（再生時だけ表示） -->
+                <video id="petAnim"
+                       playsinline
+                       muted
+                       preload="auto"
+                       poster="./assets/img/pets/placeholder.png"
+                       style="position:absolute; inset:0; width:100%; height:100%; object-fit:contain; display:none; z-index:2;">
+                  <!-- WebM優先＋MP4フォールバック（あれば） -->
+                  <!-- ソースはJSで切り替えるので最初は空でOK -->
+                </video>
 
-              <div class="row-center">
-                <button id="feedBtn" class="btn" type="button">🍙 ごはんをあげる</button>
+              
+                <div class="row-overlay">
+                  <button id="feedBtn" class="btn" type="button">🍙 ごはんをあげる</button>
+                </div>
               </div>
             </div>
           </article>
@@ -220,157 +196,218 @@
         </section>
       </main>
 
-      <!-- タブバー -->
-    <nav class="tabbar" role="navigation" aria-label="メインナビ">
-      <button class="tab" data-tab="mypage" aria-label="マイページ">
-        <i class="fa-solid fa-user"></i><span>My Page</span>
-      </button>
-      <button class="tab" data-tab="accessory" aria-label="着替え">
-        <i class="fa-solid fa-shirt"></i><span>着せ替え</span>
-      </button>
-      <button class="tab active" data-tab="home" aria-current="page" aria-label="ホーム">
-        <i class="fa-solid fa-house"></i><span>Home</span>
-      </button>
-      <button class="tab" data-tab="friends" aria-label="友だち">
-        <i class="fa-solid fa-user-group"></i><span>友だち</span>
-      </button>
-      <button class="tab" data-tab="settings" aria-label="設定">
-        <i class="fa-solid fa-gear"></i><span>設定</span>
-      </button>
-    </nav>
+      <nav class="tabbar" role="navigation" aria-label="メインナビ">
+        <button class="tab" data-tab="mypage" aria-label="マイページ">
+          <i class="fa-solid fa-user"></i><span>My Page</span>
+        </button>
+        <button class="tab" data-tab="accessory" aria-label="着替え">
+          <i class="fa-solid fa-shirt"></i><span>着せ替え</span>
+        </button>
+        <button class="tab active" data-tab="home" aria-current="page" aria-label="ホーム">
+          <i class="fa-solid fa-house"></i><span>Home</span>
+        </button>
+        <button class="tab" data-tab="friends" aria-label="友だち">
+          <i class="fa-solid fa-user-group"></i><span>友だち</span>
+        </button>
+        <button class="tab" data-tab="settings" aria-label="設定">
+          <i class="fa-solid fa-gear"></i><span>設定</span>
+        </button>
+      </nav>
     </div>
   </div>
 
   <script type="module">
-    try {
-      const { initChrome } = await import("./assets/common.js");
-      if (typeof initChrome === "function") initChrome();
-    } catch(e){ console.warn("initChrome読み込み失敗:", e); }
+    const KEY_PET='tky.pet', KEY_PET_NAME='tky.petName';
+    const $=(s,r=document)=>r.querySelector(s);
+    function loadJSON(k,f=null){try{const r=localStorage.getItem(k);return r?JSON.parse(r):f;}catch{return f}}
 
-    const $ = (s, r=document)=>r.querySelector(s);
+    const pet=loadJSON(KEY_PET,null);
+    const petName=localStorage.getItem(KEY_PET_NAME)||'';
+    const PLACEHOLDER="./assets/img/pets/placeholder.png";
 
-    const KEY_PET      = 'tky.pet';
-    const KEY_PET_NAME = 'tky.petName';
-    const KEY_NUTRI_TODAY = 'tky.nutri.today';
-
-    const COOLDOWN_MS = 10_000;
-
-    function loadJSON(key, fb=null){ try{ const raw=localStorage.getItem(key); return raw?JSON.parse(raw):fb; }catch{ return fb; } }
-
-    const pet = loadJSON(KEY_PET, null);
-    const petName = (localStorage.getItem(KEY_PET_NAME) || '').trim();
-
-    function resolvePetImage(pet){
-      if (pet && pet.id) {
-        const base = `./assets/img/pets/${pet.id}`;
-        const staged = `${base}_stage0_idle.png`;
-        return pet.img || staged || './assets/img/pets/placeholder.png';
-      }
-      return './assets/img/pets/placeholder.png';
+    function candidatesFrom(src){
+      const set=new Set();
+      if(src) set.add(src);
+      const a=src?.replace("/assets/pets/","/assets/img/pets/");
+      const b=a?.replace(/^\.?\/img\//,"./assets/img/");
+      if(b) set.add(b);
+      if(b?.startsWith("/")) set.add("."+b);
+      if(b?.startsWith("./")) set.add(b.slice(1));
+      const file=(src||"").split("/").pop();
+      if(file && !file.includes(".")) set.add(`./assets/img/pets/${file}.png`);
+      else if(file) set.add(`./assets/img/pets/${file}`);
+      if(b) set.add(b.replace(/^\.\//,"/"));
+      set.add(PLACEHOLDER);
+      return Array.from(set);
+    }
+    function resolveAndLoad(src,imgEl){
+      const tries=candidatesFrom(src); let i=0;
+      (function next(){
+        if(i>=tries.length){ imgEl.src=PLACEHOLDER; return; }
+        const s=tries[i++], probe=new Image();
+        probe.onload=()=>{ imgEl.src=s; };
+        probe.onerror=()=>next();
+        probe.src=s+(s.includes("?")?"&":"?")+"v="+Date.now();
+      })();
     }
 
-    function renderAll(){
-      const img = $('#petImg');
-      const meta = $('#petMeta');
-      img.src = resolvePetImage(pet);
-      img.alt = (petName || pet?.label || pet?.id || 'ペット') + ' の表示';
-      meta.textContent = petName || (pet?.label || pet?.id || 'ななし');
-    }
-
-    function logPush(msg){
-      const box = $('#log');
-      const item = document.createElement('div');
-      item.className = 'log-item';
-      const time = new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
-      item.textContent = `［${time}］ ${msg}`;
-      box.prepend(item);
-    }
-
-    function evaluateTodayNutrition(){
-      const today = new Date().toISOString().slice(0,10);
-      const s = loadJSON(KEY_NUTRI_TODAY, null);
-      if (!s || s.date !== today){
-        const r = Math.random();
-        return r < .33 ? 'chubby' : (r < .66 ? 'slim' : 'sparkle');
-      }
-      const total = s.totalMeals ?? 0;
-      const junk  = s.junkCount ?? 0;
-      const bal   = s.balancedScore ?? 0;
-      if (total <= 1) return 'slim';
-      if (total > 0 && junk/total >= 0.5) return 'chubby';
-      if (bal >= 0.7) return 'sparkle';
-      return 'normal';
-    }
-
-    function playAnimation(kind){
-      const canvas = $('#petCanvas');
-      const fx = $('#fx');
-      canvas.classList.remove('fatting','slimming');
-      fx.innerHTML = '';
-
-      if (kind === 'chubby'){
-        canvas.classList.add('fatting');
-        logPush('🍔 きょうはジャンク多め…ぷにっと太った！');
-      } else if (kind === 'slim'){
-        canvas.classList.add('slimming');
-        logPush('🥺 あまり食べられなかったみたい…ほっそり。');
-      } else if (kind === 'sparkle'){
-        const n = 12 + Math.floor(Math.random()*4);
-        for (let i=0;i<n;i++){
-          const sp = document.createElement('div');
-          sp.className = 'sparkle';
-          sp.style.left = Math.random()*100 + '%';
-          sp.style.animationDelay = (Math.random()*0.6) + 's';
-          sp.style.width = sp.style.height = (8 + Math.random()*10) + 'px';
-          fx.appendChild(sp);
-          sp.addEventListener('animationend', ()=> sp.remove());
-        }
-        logPush('✨ バランスよく食べられたね！キラキラ～');
-      } else {
-        logPush('🍙 もぐもぐ…');
-      }
-      setTimeout(()=> canvas.classList.remove('fatting','slimming'), 1200);
-    }
-
-    // 「待っててね」テキストは廃止。ボタンの無効化だけ行う。
-    let lastFedAt = 0;
-    function canFeedNow(){ return (Date.now() - lastFedAt) >= COOLDOWN_MS; }
-    function setCooldownUI(active){ $('#feedBtn').disabled = active; }
-
-    async function onFeed(){
-      if (!canFeedNow()){ setCooldownUI(true); return; }
-      lastFedAt = Date.now();
-      playAnimation(evaluateTodayNutrition());
-      setCooldownUI(true);
-      setTimeout(()=> setCooldownUI(false), COOLDOWN_MS);
-    }
-
-    renderAll();
-    $('#feedBtn')?.addEventListener('click', onFeed);
-    setCooldownUI(!canFeedNow());
-
-    // タブ遷移
-    const TabToPath = {
-      mypage:'./mypage.html', accessory:'./accessory.html', home:'./main.html',
-      friends:'./friends.html', settings:'./settings.html'
-    };
-    (function syncActiveTab(){
-      const now = location.pathname.split('/').pop().toLowerCase();
-      document.querySelectorAll('.tabbar .tab').forEach(btn=>{
-        const key = btn.getAttribute('data-tab');
-        const path = TabToPath[key];
-        const isActive = path && now === path.split('/').pop().toLowerCase();
-        btn.classList.toggle('active', !!isActive);
-        btn.setAttribute('aria-current', isActive ? 'page' : 'false');
-      });
+    (function render(){
+      const imgEl=$('#petImg');
+      const nameEl=$('#petMeta');
+      if(!imgEl) return;
+      if(!pet){ imgEl.src=PLACEHOLDER; if(nameEl) nameEl.textContent=''; return; }
+      const typeLabel=pet.label||pet.id||'ペット';
+      if(nameEl) nameEl.textContent = petName ? `${petName}（${typeLabel}）` : `${typeLabel}`;
+      imgEl.alt=`${typeLabel} のプレビュー`;
+      resolveAndLoad(pet.img||PLACEHOLDER,imgEl);
     })();
-    document.querySelector('.tabbar')?.addEventListener('click', (e)=>{
-      const btn = e.target.closest('.tab'); if(!btn) return;
-      const key = btn.getAttribute('data-tab'); const to = TabToPath[key]; if(!to) return;
-      const now = location.pathname.split('/').pop().toLowerCase();
-      if (now === to.split('/').pop().toLowerCase()) return;
-      location.href = to;
-    });
+
+    // ===== モーダル制御 =====
+const modal = $('#foodModal');
+const feedBtn = $('#feedBtn');
+const foodForm = $('#foodForm');
+const foodCancel = $('#foodCancel');
+const petImg = $('#petImg');
+const petAnim = $('#petAnim');
+const logEl = $('#log');
+
+function openModal(){
+  modal.style.display = 'flex';
+  modal.setAttribute('aria-hidden','false');
+}
+function closeModal(){
+  modal.style.display = 'none';
+  modal.setAttribute('aria-hidden','true');
+}
+
+feedBtn?.addEventListener('click', openModal);
+foodCancel?.addEventListener('click', closeModal);
+modal?.addEventListener('click', (e)=>{ if(e.target === modal) closeModal(); });
+
+// ===== アニメ判定ロジック =====
+// ざっくり：タンパク質high + 炭水化物high → 増量、野菜highかつ他がlow寄り → 減量、それ以外 → ふつう
+function decideAnimation({protein, veggie, carb}){
+  const heavy = (protein === 'high' && carb === 'high') || (protein === 'high' && veggie === 'low');
+  const light = (veggie === 'high' && protein !== 'high' && carb !== 'high') || (protein === 'low' && carb === 'low');
+  if (heavy) return 'gain';   // 太る
+  if (light) return 'lose';   // 痩せる
+  return 'idle';              // ふつう
+}
+
+// アニメファイルのパス（自分の実ファイル名に合わせてね）
+const ANIM_SRC = {
+  gain: { webm: './assets/video/pet_gain.webm', mp4: './assets/video/pet_gain.mp4' },
+  lose: { webm: './assets/video/pet_lose.webm', mp4: './assets/video/pet_lose.mp4' },
+  idle: { webm: './assets/video/pet_idle.webm', mp4: './assets/video/pet_idle.mp4' },
+};
+
+// 再生ヘルパー：動画→終わったら静止画へ戻す（もしくはidleループに戻す）
+let isAnimating = false;
+async function playAnim(kind='idle'){
+  if (!petAnim) return;
+  if (isAnimating) return;
+  isAnimating = true;
+
+  // 画像は一旦隠す
+  petImg.style.visibility = 'hidden';
+
+  // ソース差し替え（ブラウザ互換：WebM→MP4の順で試す）
+  petAnim.pause();
+  petAnim.innerHTML = ''; // 既存sourceクリア
+  const { webm, mp4 } = ANIM_SRC[kind] || ANIM_SRC.idle;
+  if (webm) {
+    const s1 = document.createElement('source'); s1.src = webm; s1.type = 'video/webm'; petAnim.appendChild(s1);
+  }
+  if (mp4) {
+    const s2 = document.createElement('source'); s2.src = mp4; s2.type = 'video/mp4'; petAnim.appendChild(s2);
+  }
+  petAnim.loop = (kind === 'idle');     // idleはループ、それ以外は1回再生
+  petAnim.currentTime = 0;
+  petAnim.style.display = 'block';
+
+  try {
+    await petAnim.play();
+  } catch(e) {
+    // 自動再生がブロックされた場合はミュート&クリック開始など検討
+    console.warn('autoplay blocked?', e);
+  }
+
+  // 1回再生系は終了後idleに戻す
+  if (!petAnim.loop) {
+    petAnim.onended = async () => {
+      petAnim.onended = null;
+      // idleに戻す（idle動画があればループ再生／なければ画像を戻す）
+      if (ANIM_SRC.idle?.mp4 || ANIM_SRC.idle?.webm) {
+        await playIdleLoop();
+      } else {
+        petAnim.style.display = 'none';
+        petImg.style.visibility = 'visible';
+        isAnimating = false;
+      }
+    };
+  } else {
+    // idleを流し続ける場合はこちらで解除しない
+    isAnimating = false;
+  }
+}
+
+async function playIdleLoop(){
+  // idleに切替
+  petAnim.pause();
+  petAnim.innerHTML = '';
+  const { webm, mp4 } = ANIM_SRC.idle;
+  if (webm) {
+    const s1 = document.createElement('source'); s1.src = webm; s1.type = 'video/webm'; petAnim.appendChild(s1);
+  }
+  if (mp4) {
+    const s2 = document.createElement('source'); s2.src = mp4; s2.type = 'video/mp4'; petAnim.appendChild(s2);
+  }
+  petAnim.loop = true;
+  petAnim.currentTime = 0;
+  petAnim.style.display = 'block';
+  try { await petAnim.play(); } catch {}
+  // 画像は隠したまま（idle動画が常に表示される設計）
+  petImg.style.visibility = 'hidden';
+  isAnimating = false;
+}
+
+// はじめにidleがあるなら流しておく（なければ静止画のまま）
+if (ANIM_SRC.idle?.mp4 || ANIM_SRC.idle?.webm) {
+  playIdleLoop();
+}
+
+// ===== 送信で判定→再生＋ログ追加 =====
+foodForm?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(foodForm);
+  const data = {
+    protein: fd.get('protein'),
+    veggie:  fd.get('veggie'),
+    carb:    fd.get('carb'),
+  };
+  const kind = decideAnimation(data); // 'gain' | 'lose' | 'idle'
+  closeModal();
+
+  // ログ
+  addLogRow(data, kind);
+
+  // アニメ再生
+  await playAnim(kind);
+});
+
+function addLogRow(data, kind){
+  const now = new Date();
+  const jst = now.toLocaleString('ja-JP', { hour12:false });
+  const mapJP = { low:'すくなめ', mid:'ふつう', high:'おおめ' };
+  const label = (kind==='gain')?'⤴ 太った':(kind==='lose')?'⤵ 痩せた':'＝ ふつう';
+  const div = document.createElement('div');
+  div.className = 'log-item';
+  div.innerHTML =
+    `<strong>${label}</strong> <span style="color:#888;">${jst}</span><br>
+     主菜: ${mapJP[data.protein]} / 野菜: ${mapJP[data.veggie]} / 主食: ${mapJP[data.carb]}`;
+  logEl?.prepend(div);
+}
+
   </script>
 </body>
 </html>
