@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>たべきゃら | 着せ替え</title>
+  <link href="https://fonts.googleapis.com/css2?family=Hachi+Maru+Pop&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/styles.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/css/all.min.css">
+  <style>
+    :root{ --top-gap: clamp(16px, 6vh, 56px); }
+    html,body{ height:100%; margin:0; font-family:"Hachi Maru Pop",cursive; background:var(--bg); }
+    .phone,.screen{ height:100svh; display:flex; flex-direction:column; overflow:hidden; }
+    main{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+          padding:8px 16px calc(var(--tabbar-h) + env(safe-area-inset-bottom)); box-sizing:border-box; overflow:hidden; }
+    .hero{ display:grid; place-items:center; text-align:center; gap:6px; padding:16px 16px 4px; margin-top:44px; }
+    .app-title{ font-size:clamp(22px,5.2vw,30px); font-weight:900; letter-spacing:.08em; -webkit-text-stroke:1px rgba(0,0,0,.06); line-height:1.05; }
+    .lead{ color:var(--sub); font-size:13px; }
+
+    /* 小さめの選択カード（1枚） */
+    .pick-wrap{
+      width:min(92vw,560px);
+      display:grid; grid-template-columns:repeat(4, minmax(0,1fr));
+      gap:10px; margin-top:12px;
+    }
+    .item{
+      position:relative; border:2px solid var(--line2); border-radius:12px; overflow:hidden;
+      aspect-ratio: 1/1; background:#fff; cursor:pointer;
+      display:grid; place-items:center;
+    }
+    .thumb{ position:absolute; inset:0; background:center / cover no-repeat url("./assets/img/haikei.png"); }
+    .badge{
+      position:absolute; left:6px; top:6px; font-size:11px;
+      background:#ffffffd8; border:1px solid var(--line); padding:3px 8px; border-radius:999px;
+    }
+    .item:hover .thumb{ transform:scale(1.03); transition:.15s ease; }
+    .item[data-active="true"]{ outline:3px solid #ffccb3; border-color:#ffb999; }
+    .item[data-active="true"] .badge{ background:#ffe6d7; border-color:#ffccb3; }
+
+    /* プレビュー：縦長を小さめに表示（任意） */
+    .preview{
+      width:min(70vw,380px);
+      aspect-ratio:9/16;
+      border:2px solid var(--line2); border-radius:16px; overflow:hidden;
+      box-shadow:0 6px 18px rgba(0,0,0,.08) inset;
+      background:center/cover no-repeat url("./assets/img/haikei.png");
+      margin-top:12px;
+    }
+
+    .actions{ display:flex; gap:8px; justify-content:flex-end; align-items:center;
+              width:min(92vw,560px); margin-top:12px; }
+    .btn{ font-size:16px; padding:10px 16px; }
+
+    /* タブバー（mainと統一） */
+    .tabbar{
+      position:absolute; bottom:0; left:0; width:100%;
+      display:grid; grid-template-columns:repeat(5,1fr); gap:6px;
+      background:#fff; border-top:2px solid var(--line2);
+      padding:6px 6px calc(6px + env(safe-area-inset-bottom));
+      height:var(--tabbar-h); box-sizing:border-box; flex-shrink:0;
+    }
+    .tabbar .tab{
+      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+      border:1px solid var(--line); border-radius:14px; background:#fff7f1;
+      font-size:11px; color:#444; cursor:pointer; padding:8px 4px 6px;
+    }
+    .tabbar .tab i{ font-size:20px; line-height:1; }
+    .tabbar .tab.active{ background:#ffe6d7; border-color:#ffccb3; color:#A3A649; }
+    .tabbar .tab:focus-visible{ outline:2px solid #ffb999; outline-offset:2px; }
+  </style>
+</head>
+<body data-page="accessory">
+  <div class="phone">
+    <div class="screen">
+      <div class="island" aria-hidden="true"></div>
+
+      <main id="app">
+        <section class="hero">
+          <div class="app-title">着せ替え（背景）</div>
+          <div class="lead">小さい画像を選んで「この背景にする」を押すとHomeに反映されます</div>
+        </section>
+
+        <!-- 小さな選択カード（1枚だけ） -->
+        <div class="pick-wrap" id="pickWrap">
+          <button type="button" class="item" id="optHaikei" data-active="false" aria-pressed="false" aria-label="背景：haikei">
+            <span class="thumb" aria-hidden="true"></span>
+            <span class="badge">選択</span>
+          </button>
+        </div>
+
+        <!-- プレビュー（任意：選択時に表示/更新） -->
+        <div class="preview" id="preview" aria-label="背景プレビュー"></div>
+
+        <div class="actions">
+          <button class="btn" id="clearBtn" style="background:#fff7f1; border:1px solid var(--line);">背景をやめる</button>
+          <button class="btn" id="saveBtn" disabled>この背景にする</button>
+        </div>
+      </main>
+
+      <nav class="tabbar" role="navigation" aria-label="メインナビ">
+        <button class="tab" data-tab="mypage" aria-label="マイページ">
+          <i class="fa-solid fa-user"></i><span>My Page</span>
+        </button>
+        <button class="tab active" data-tab="accessory" aria-current="page" aria-label="着替え">
+          <i class="fa-solid fa-shirt"></i><span>着せ替え</span>
+        </button>
+        <button class="tab" data-tab="home" aria-label="ホーム">
+          <i class="fa-solid fa-house"></i><span>Home</span>
+        </button>
+        <button class="tab" data-tab="friends" aria-label="友だち">
+          <i class="fa-solid fa-user-group"></i><span>友だち</span>
+        </button>
+        <button class="tab" data-tab="settings" aria-label="設定">
+          <i class="fa-solid fa-gear"></i><span>設定</span>
+        </button>
+      </nav>
+    </div>
+  </div>
+
+  <script type="module">
+    const KEY_BG = 'tky.bg';
+    const HAIKEI = { id:'haikei', url:'./assets/img/haikei.png' }; // 画像パス
+    const $ = (s, r=document)=>r.querySelector(s);
+
+    const opt = $('#optHaikei');
+    const preview = $('#preview');
+    const saveBtn = $('#saveBtn');
+
+    // 選択トグル（1枚だけなので押したら選択状態に）
+    opt.addEventListener('click', ()=>{
+      const active = opt.getAttribute('data-active') === 'true';
+      const next = !active;
+      opt.setAttribute('data-active', String(next));
+      opt.setAttribute('aria-pressed', String(next));
+      opt.querySelector('.badge').textContent = next ? '選択中' : '選択';
+
+      // プレビュー更新
+      if(next){
+        preview.style.backgroundImage = `url("${HAIKEI.url}")`;
+      }else{
+        preview.style.backgroundImage = `none`;
+      }
+
+      // 保存ボタンの有効/無効
+      saveBtn.disabled = !next;
+    });
+
+    // 保存 → mainへ
+    saveBtn.addEventListener('click', ()=>{
+      if(opt.getAttribute('data-active') === 'true'){
+        localStorage.setItem(KEY_BG, JSON.stringify(HAIKEI));
+        window.location.href = './main.html';
+      }
+    });
+
+    // 解除（デフォルト色へ戻す）
+    $('#clearBtn')?.addEventListener('click', ()=>{
+      localStorage.removeItem(KEY_BG);
+      window.location.href = './main.html';
+    });
+
+    // タブ遷移
+    document.querySelectorAll('.tabbar .tab').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const tab = btn.getAttribute('data-tab');
+        if(tab === 'home')       window.location.href = './main.html';
+        else if(tab === 'accessory') window.location.href = './accessory.html';
+        else if(tab === 'mypage') window.location.href = './mypage.html';
+        else if(tab === 'friends')window.location.href = './friends.html';
+        else if(tab === 'settings')window.location.href = './settings.html';
+      });
+    });
+  </script>
+</body>
+</html>

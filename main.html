@@ -197,19 +197,19 @@
       </main>
 
       <nav class="tabbar" role="navigation" aria-label="メインナビ">
-        <button class="tab" data-tab="mypage" aria-label="マイページ">
+        <button class="tab" aria-label="マイページ" onclick="location.href='mypage.html'">
           <i class="fa-solid fa-user"></i><span>My Page</span>
         </button>
-        <button class="tab" data-tab="accessory" aria-label="着替え">
+        <button class="tab" aria-label="着せ替え" onclick="location.href='accessory.html'">
           <i class="fa-solid fa-shirt"></i><span>着せ替え</span>
         </button>
-        <button class="tab active" data-tab="home" aria-current="page" aria-label="ホーム">
+        <button class="tab active" aria-current="page" aria-label="ホーム" onclick="location.href='main.html'">
           <i class="fa-solid fa-house"></i><span>Home</span>
         </button>
-        <button class="tab" data-tab="friends" aria-label="友だち">
+        <button class="tab" aria-label="友だち" onclick="location.href='friends.html'">
           <i class="fa-solid fa-user-group"></i><span>友だち</span>
         </button>
-        <button class="tab" data-tab="settings" aria-label="設定">
+        <button class="tab" aria-label="設定" onclick="location.href='settings.html'">
           <i class="fa-solid fa-gear"></i><span>設定</span>
         </button>
       </nav>
@@ -217,197 +217,123 @@
   </div>
 
   <script type="module">
-    const KEY_PET='tky.pet', KEY_PET_NAME='tky.petName';
-    const $=(s,r=document)=>r.querySelector(s);
-    function loadJSON(k,f=null){try{const r=localStorage.getItem(k);return r?JSON.parse(r):f;}catch{return f}}
+  const KEY_PET='tky.pet', KEY_PET_NAME='tky.petName';
+  const $=(s,r=document)=>r.querySelector(s);
+  function loadJSON(k,f=null){try{const r=localStorage.getItem(k);return r?JSON.parse(r):f;}catch{return f}}
 
-    const pet=loadJSON(KEY_PET,null);
-    const petName=localStorage.getItem(KEY_PET_NAME)||'';
-    const PLACEHOLDER="./assets/img/pets/placeholder.png";
+  const pet=loadJSON(KEY_PET,null);
+  const petName=localStorage.getItem(KEY_PET_NAME)||'';
+  const PLACEHOLDER="./assets/img/pets/placeholder.png";
 
-    function candidatesFrom(src){
-      const set=new Set();
-      if(src) set.add(src);
-      const a=src?.replace("/assets/pets/","/assets/img/pets/");
-      const b=a?.replace(/^\.?\/img\//,"./assets/img/");
-      if(b) set.add(b);
-      if(b?.startsWith("/")) set.add("."+b);
-      if(b?.startsWith("./")) set.add(b.slice(1));
-      const file=(src||"").split("/").pop();
-      if(file && !file.includes(".")) set.add(`./assets/img/pets/${file}.png`);
-      else if(file) set.add(`./assets/img/pets/${file}`);
-      if(b) set.add(b.replace(/^\.\//,"/"));
-      set.add(PLACEHOLDER);
-      return Array.from(set);
-    }
-    function resolveAndLoad(src,imgEl){
-      const tries=candidatesFrom(src); let i=0;
-      (function next(){
-        if(i>=tries.length){ imgEl.src=PLACEHOLDER; return; }
-        const s=tries[i++], probe=new Image();
-        probe.onload=()=>{ imgEl.src=s; };
-        probe.onerror=()=>next();
-        probe.src=s+(s.includes("?")?"&":"?")+"v="+Date.now();
-      })();
-    }
-
-    (function render(){
-      const imgEl=$('#petImg');
-      const nameEl=$('#petMeta');
-      if(!imgEl) return;
-      if(!pet){ imgEl.src=PLACEHOLDER; if(nameEl) nameEl.textContent=''; return; }
-      const typeLabel=pet.label||pet.id||'ペット';
-      if(nameEl) nameEl.textContent = petName ? `${petName}（${typeLabel}）` : `${typeLabel}`;
-      imgEl.alt=`${typeLabel} のプレビュー`;
-      resolveAndLoad(pet.img||PLACEHOLDER,imgEl);
+  function candidatesFrom(src){
+    const set=new Set();
+    if(src) set.add(src);
+    const a=src?.replace("/assets/pets/","/assets/img/pets/");
+    const b=a?.replace(/^\.?\/img\//,"./assets/img/");
+    if(b) set.add(b);
+    if(b?.startsWith("/")) set.add("."+b);
+    if(b?.startsWith("./")) set.add(b.slice(1));
+    const file=(src||"").split("/").pop();
+    if(file && !file.includes(".")) set.add(`./assets/img/pets/${file}.png`);
+    else if(file) set.add(`./assets/img/pets/${file}`);
+    if(b) set.add(b.replace(/^\.\//,"/"));
+    set.add(PLACEHOLDER);
+    return Array.from(set);
+  }
+  function resolveAndLoad(src,imgEl){
+    const tries=candidatesFrom(src); let i=0;
+    (function next(){
+      if(i>=tries.length){ imgEl.src=PLACEHOLDER; return; }
+      const s=tries[i++], probe=new Image();
+      probe.onload=()=>{ imgEl.src=s; };
+      probe.onerror=()=>next();
+      probe.src=s+(s.includes("?")?"&":"?")+"v="+Date.now();
     })();
-
-    // ===== モーダル制御 =====
-const modal = $('#foodModal');
-const feedBtn = $('#feedBtn');
-const foodForm = $('#foodForm');
-const foodCancel = $('#foodCancel');
-const petImg = $('#petImg');
-const petAnim = $('#petAnim');
-const logEl = $('#log');
-
-function openModal(){
-  modal.style.display = 'flex';
-  modal.setAttribute('aria-hidden','false');
-}
-function closeModal(){
-  modal.style.display = 'none';
-  modal.setAttribute('aria-hidden','true');
-}
-
-feedBtn?.addEventListener('click', openModal);
-foodCancel?.addEventListener('click', closeModal);
-modal?.addEventListener('click', (e)=>{ if(e.target === modal) closeModal(); });
-
-// ===== アニメ判定ロジック =====
-// ざっくり：タンパク質high + 炭水化物high → 増量、野菜highかつ他がlow寄り → 減量、それ以外 → ふつう
-function decideAnimation({protein, veggie, carb}){
-  const heavy = (protein === 'high' && carb === 'high') || (protein === 'high' && veggie === 'low');
-  const light = (veggie === 'high' && protein !== 'high' && carb !== 'high') || (protein === 'low' && carb === 'low');
-  if (heavy) return 'gain';   // 太る
-  if (light) return 'lose';   // 痩せる
-  return 'idle';              // ふつう
-}
-
-// アニメファイルのパス（自分の実ファイル名に合わせてね）
-const ANIM_SRC = {
-  gain: { webm: './assets/video/pet_gain.webm', mp4: './assets/video/pet_gain.mp4' },
-  lose: { webm: './assets/video/pet_lose.webm', mp4: './assets/video/pet_lose.mp4' },
-  idle: { webm: './assets/video/pet_idle.webm', mp4: './assets/video/pet_idle.mp4' },
-};
-
-// 再生ヘルパー：動画→終わったら静止画へ戻す（もしくはidleループに戻す）
-let isAnimating = false;
-async function playAnim(kind='idle'){
-  if (!petAnim) return;
-  if (isAnimating) return;
-  isAnimating = true;
-
-  // 画像は一旦隠す
-  petImg.style.visibility = 'hidden';
-
-  // ソース差し替え（ブラウザ互換：WebM→MP4の順で試す）
-  petAnim.pause();
-  petAnim.innerHTML = ''; // 既存sourceクリア
-  const { webm, mp4 } = ANIM_SRC[kind] || ANIM_SRC.idle;
-  if (webm) {
-    const s1 = document.createElement('source'); s1.src = webm; s1.type = 'video/webm'; petAnim.appendChild(s1);
-  }
-  if (mp4) {
-    const s2 = document.createElement('source'); s2.src = mp4; s2.type = 'video/mp4'; petAnim.appendChild(s2);
-  }
-  petAnim.loop = (kind === 'idle');     // idleはループ、それ以外は1回再生
-  petAnim.currentTime = 0;
-  petAnim.style.display = 'block';
-
-  try {
-    await petAnim.play();
-  } catch(e) {
-    // 自動再生がブロックされた場合はミュート&クリック開始など検討
-    console.warn('autoplay blocked?', e);
   }
 
-  // 1回再生系は終了後idleに戻す
-  if (!petAnim.loop) {
-    petAnim.onended = async () => {
-      petAnim.onended = null;
-      // idleに戻す（idle動画があればループ再生／なければ画像を戻す）
-      if (ANIM_SRC.idle?.mp4 || ANIM_SRC.idle?.webm) {
-        await playIdleLoop();
-      } else {
-        petAnim.style.display = 'none';
-        petImg.style.visibility = 'visible';
-        isAnimating = false;
-      }
+  (function render(){
+    const imgEl=$('#petImg');
+    const nameEl=$('#petMeta');
+    if(!imgEl) return;
+    if(!pet){ imgEl.src=PLACEHOLDER; if(nameEl) nameEl.textContent=''; return; }
+    const typeLabel=pet.label||pet.id||'ペット';
+    if(nameEl) nameEl.textContent = petName ? `${petName}（${typeLabel}）` : `${typeLabel}`;
+    imgEl.alt=`${typeLabel} のプレビュー`;
+    resolveAndLoad(pet.img||PLACEHOLDER,imgEl);
+  })();
+
+  // ===== モーダル制御 =====
+  const modal = $('#foodModal');
+  const feedBtn = $('#feedBtn');
+  const foodForm = $('#foodForm');
+  const foodCancel = $('#foodCancel');
+  const petImg = $('#petImg');
+  const petAnim = $('#petAnim');
+  const logEl = $('#log');
+
+  function openModal(){
+    modal.style.display = 'flex';
+    modal.setAttribute('aria-hidden','false');
+  }
+  function closeModal(){
+    modal.style.display = 'none';
+    modal.setAttribute('aria-hidden','true');
+  }
+
+  feedBtn?.addEventListener('click', openModal);
+  foodCancel?.addEventListener('click', closeModal);
+  modal?.addEventListener('click', (e)=>{ if(e.target === modal) closeModal(); });
+
+  // ===== もぐもぐ再生だけやる（1回表示→静止画へ戻す） =====
+// ファイル場所： assets/img/mogumogu.gif
+const CHEW_SRC = { gif: './assets/img/mogumogu.gif' };
+let chewing = false;
+
+async function playChewOnce() {
+  if (chewing) return;
+  chewing = true;
+
+  // もぐもぐGIFを画像として差し替える
+  const originalSrc = petImg.src; // 元の画像を保存
+  petImg.src = CHEW_SRC.gif;
+
+  // GIFの再生時間分だけ待つ（2〜3秒を目安に調整）
+  await new Promise(r => setTimeout(r, 3000));
+
+  // 終了後、元の画像に戻す
+  petImg.src = originalSrc;
+  chewing = false;
+}
+
+  // ===== 送信でログ追加 → もぐもぐ再生 =====
+  foodForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(foodForm);
+    const data = {
+      protein: fd.get('protein'),
+      veggie:  fd.get('veggie'),
+      carb:    fd.get('carb'),
     };
-  } else {
-    // idleを流し続ける場合はこちらで解除しない
-    isAnimating = false;
+    closeModal();
+
+    addLogRow(data, 'chew'); // いまは「もぐもぐ」固定
+
+    await playChewOnce();
+  });
+
+  function addLogRow(data, kind){
+    const now = new Date();
+    const jst = now.toLocaleString('ja-JP', { hour12:false });
+    const mapJP = { low:'すくなめ', mid:'ふつう', high:'おおめ' };
+    const label = '🍙 もぐもぐ';
+    const div = document.createElement('div');
+    div.className = 'log-item';
+    div.innerHTML =
+      `<strong>${label}</strong> <span style="color:#888;">${jst}</span><br>
+       主菜: ${mapJP[data.protein]} / 野菜: ${mapJP[data.veggie]} / 主食: ${mapJP[data.carb]}`;
+    logEl?.prepend(div);
   }
-}
+</script>
 
-async function playIdleLoop(){
-  // idleに切替
-  petAnim.pause();
-  petAnim.innerHTML = '';
-  const { webm, mp4 } = ANIM_SRC.idle;
-  if (webm) {
-    const s1 = document.createElement('source'); s1.src = webm; s1.type = 'video/webm'; petAnim.appendChild(s1);
-  }
-  if (mp4) {
-    const s2 = document.createElement('source'); s2.src = mp4; s2.type = 'video/mp4'; petAnim.appendChild(s2);
-  }
-  petAnim.loop = true;
-  petAnim.currentTime = 0;
-  petAnim.style.display = 'block';
-  try { await petAnim.play(); } catch {}
-  // 画像は隠したまま（idle動画が常に表示される設計）
-  petImg.style.visibility = 'hidden';
-  isAnimating = false;
-}
-
-// はじめにidleがあるなら流しておく（なければ静止画のまま）
-if (ANIM_SRC.idle?.mp4 || ANIM_SRC.idle?.webm) {
-  playIdleLoop();
-}
-
-// ===== 送信で判定→再生＋ログ追加 =====
-foodForm?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const fd = new FormData(foodForm);
-  const data = {
-    protein: fd.get('protein'),
-    veggie:  fd.get('veggie'),
-    carb:    fd.get('carb'),
-  };
-  const kind = decideAnimation(data); // 'gain' | 'lose' | 'idle'
-  closeModal();
-
-  // ログ
-  addLogRow(data, kind);
-
-  // アニメ再生
-  await playAnim(kind);
-});
-
-function addLogRow(data, kind){
-  const now = new Date();
-  const jst = now.toLocaleString('ja-JP', { hour12:false });
-  const mapJP = { low:'すくなめ', mid:'ふつう', high:'おおめ' };
-  const label = (kind==='gain')?'⤴ 太った':(kind==='lose')?'⤵ 痩せた':'＝ ふつう';
-  const div = document.createElement('div');
-  div.className = 'log-item';
-  div.innerHTML =
-    `<strong>${label}</strong> <span style="color:#888;">${jst}</span><br>
-     主菜: ${mapJP[data.protein]} / 野菜: ${mapJP[data.veggie]} / 主食: ${mapJP[data.carb]}`;
-  logEl?.prepend(div);
-}
-
-  </script>
 </body>
 </html>
