@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <link href="https://fonts.googleapis.com/css2?family=Hachi+Maru+Pop&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>たべきゃら | 目標を立てよう！</title>
+  <link rel="stylesheet" href="./assets/styles.css" />
+  <style>
+    body { font-family: "Hachi Maru Pop", cursive; }
+
+    .hero {
+      display:grid; gap:12px; place-items:center;
+      padding:84px 16px 8px;
+      text-align:center;
+    }
+    .app-title {
+      font-size: clamp(24px, 6vw, 36px);
+      letter-spacing:.08em; font-weight:900;
+      -webkit-text-stroke:1px rgba(0,0,0,.08);
+      text-shadow:0 2px 0 rgba(0,0,0,.05);
+    }
+    .lead { color:#665; font-size:14px; }
+
+    .goal-wrap {
+      display:grid; gap:16px; padding:12px 16px 24px;
+    }
+
+    .goal-row {
+      display:flex; align-items:center; gap:10px;
+      background:#fffaf7; border:2px solid #ffe4d1; border-radius:16px;
+      padding:10px 12px; box-shadow:0 3px 6px rgba(0,0,0,.04);
+    }
+    .goal-row input[type="text"]{
+      flex:1; min-width:0;
+      font-family:"Hachi Maru Pop", cursive;
+      font-size:16px; padding:12px 14px;
+      border:1px solid #f5d7c6; border-radius:12px;
+      background:#fff;
+    }
+    .goal-row input[type="text"]::placeholder { color:#aa8; }
+
+    .icon-btn {
+      border:1px solid #ffd2bc; background:#ffe0cf; color:#444;
+      font-family:"Hachi Maru Pop", cursive;
+      border-radius:12px; padding:10px 12px; cursor:pointer;
+    }
+    .icon-btn:hover { transform:translateY(-2px); transition:transform .2s ease; }
+
+    .toolbar {
+      display:flex; justify-content:center; gap:10px; padding:4px 16px 8px;
+    }
+
+    .btn, button.btn {
+      display:inline-block; text-align:center; text-decoration:none; cursor:pointer; border:none;
+      font-family:"Hachi Maru Pop", cursive; font-size:18px; font-weight:600;
+      border-radius:999px; padding:14px 18px;
+    }
+    .btn-primary { background:#ffe0cf; border:1px solid #ffd2bc; color:#444; }
+    .btn-ghost   { background:#fff; border:1px dashed #ffd2bc; color:#444; }
+
+    .cta { display:flex; justify-content:center; padding:8px 16px 28px; }
+    .hint { text-align:center; color:#886; font-size:12px; margin-top:-4px; }
+
+    .sr { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0; }
+  </style>
+</head>
+<body data-page="onboarding-goal">
+  <div class="phone">
+    <div class="screen">
+      <div class="island" aria-hidden="true"></div>
+      <main id="app" class="fade">
+        <section class="hero">
+          <div class="app-title">達成したい目標を立てよう！</div>
+          <div class="lead">食事や生活の目標を1〜5こ入力してね</div>
+        </section>
+
+        <section class="goal-wrap" id="goalWrap" aria-label="目標入力リスト">
+          <!-- JSで行を挿入 -->
+        </section>
+
+        <div class="toolbar">
+          <button id="addBtn" class="btn btn-ghost" type="button" aria-label="入力欄を追加">＋ 追加</button>
+          <span class="hint" id="countHint">0/5</span>
+        </div>
+
+        <div class="cta">
+          <button id="confirmBtn" class="btn btn-primary" type="button" disabled>確認する</button>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script type="module">
+    // 画面フレーム等の初期化
+    try {
+      const { initChrome } = await import("./assets/common.js");
+      if (typeof initChrome === "function") initChrome();
+    } catch (e) { console.warn("initChromeの読み込みに失敗:", e); }
+
+    const MAX = 5;
+    const STORAGE_KEY = 'tky.goals';
+
+    const $  = (s, r=document)=>r.querySelector(s);
+    const $$ = (s, r=document)=>Array.from(r.querySelectorAll(s));
+
+    const wrap = $('#goalWrap');
+    const addBtn = $('#addBtn');
+    const confirmBtn = $('#confirmBtn');
+    const countHint = $('#countHint');
+
+    // 行テンプレ
+    function createRow(value=''){
+      const row = document.createElement('div');
+      row.className = 'goal-row';
+      row.setAttribute('role','group');
+      row.setAttribute('aria-label','目標入力');
+
+      const id = 'goal-' + Math.random().toString(36).slice(2,7);
+
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.id = id;
+      input.placeholder = '例）毎日朝ごはんを食べる';
+      input.maxLength = 60;
+      input.value = value;
+
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'icon-btn';
+      del.setAttribute('aria-label','この入力欄を削除');
+      del.textContent = '削除';
+
+      del.addEventListener('click', ()=>{
+        row.remove();
+        updateState();
+      });
+
+      input.addEventListener('input', updateState);
+      input.addEventListener('keydown', (e)=>{
+        // Enterで次の入力にフォーカス（送信しない）
+        if(e.key === 'Enter'){
+          e.preventDefault();
+          const rows = $$('.goal-row input');
+          const idx = rows.indexOf(input);
+          if (idx >= 0 && idx < rows.length - 1) rows[idx+1].focus();
+          else addRowAndFocus();
+        }
+      });
+
+      row.append(input, del);
+      return row;
+    }
+
+    function addRowAndFocus(prefill=''){
+      if ($$('.goal-row').length >= MAX) return;
+      const row = createRow(prefill);
+      wrap.appendChild(row);
+      row.querySelector('input').focus();
+      updateState();
+    }
+
+    function updateState(){
+      const inputs = $$('.goal-row input');
+      const values = inputs.map(i=>i.value.trim());
+      const nonEmpty = values.filter(v=>v !== '');
+      // ボタン状態
+      confirmBtn.disabled = nonEmpty.length === 0;
+      // 追加制御
+      addBtn.disabled = inputs.length >= MAX;
+      // カウント表示（非空/上限）
+      countHint.textContent = `${nonEmpty.length}/${MAX}`;
+      // 保存（常に最新を保存）
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(nonEmpty));
+      } catch {}
+    }
+
+    // 既存データの復元
+    (function init(){
+      let restored = [];
+      try {
+        const raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (Array.isArray(raw)) restored = raw.slice(0, MAX);
+      } catch {}
+
+      if (restored.length === 0) {
+        // デフォで1行
+        addRowAndFocus('');
+      } else {
+        restored.forEach(v=>wrap.appendChild(createRow(v)));
+        // 上限未満なら最後に空行を一つ出してもOK
+        if ($$('.goal-row').length < MAX) wrap.appendChild(createRow(''));
+      }
+      updateState();
+    })();
+
+    // 追加
+    addBtn.addEventListener('click', ()=> addRowAndFocus(''));
+
+    // 確認→保存して次へ
+    confirmBtn.addEventListener('click', ()=>{
+      const goals = $$('.goal-row input')
+        .map(i=>i.value.trim())
+        .filter(v=>v !== '');
+
+      if (goals.length === 0) {
+        // 念のためダブルチェック
+        alert('目標を1つ以上入力してね');
+        return;
+      }
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(goals)); } catch {}
+
+      // 次ページへ（必要に応じて変更してね）
+      location.href = './onboarding-welcome.html';
+    });
+
+  </script>
+</body>
+</html>
