@@ -42,11 +42,12 @@
 
     .btn,
     button.btn {
+    width: 150px;
     display: inline-block;
     text-align: center;
     text-decoration: none;
     cursor: pointer;
-     border: none;
+    border: none;
     font-family: "Hachi Maru Pop", cursive;
     font-size: 18px;
     font-weight: 600;
@@ -76,30 +77,29 @@
     }
 
     .pet {
-        background: #fffaf7; 
-        border: 2px solid #ffe4d1;
-        border-radius: 20px;
-        padding: 16px 8px;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
         width: 100%;
-        max-width: 100px; 
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.04);
-        transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
-        position: relative; 
+        max-width: 140px; 
+        display: grid;
+        gap: 8px;
+        justify-items: center;
+        transition: transform .12s ease;
     }
     .badge {
-        display: none;  
+        display: none; 
         position: absolute;
-        top: 6px;
-        right: 6px;
+        top: 120px;
         font-size: 12px;
-        padding: 4px 8px;
+        line-height: 1;
+        padding: 6px 8px;
         border-radius: 999px;
         background: #ffe0cf;
         border: 1px solid #ffd2bc;
         color: #444;
+        box-shadow: 0 2px 8px rgba(0,0,0,.12);
     }   
 
     .pet.selected .badge {
@@ -107,13 +107,15 @@
     }
 
     .pet img {
-        width: 80px; 
-        height: 80px;
-        object-fit: contain;
-        border-radius: 50%;  
-        background-color: #fff;
-        padding: 8px;
-        border: 1px solid #f5d7c6;
+        width: 150%;
+        height: auto;
+        display: block;
+        border: none !important;
+        border-radius: 12px;     
+        padding: 0 !important;
+        background: transparent !important;
+        filter: drop-shadow(0 2px 6px rgba(0,0,0,.08));
+        transition: transform .15s ease, filter .15s ease;
     }
 
     .pet-name {
@@ -152,25 +154,24 @@
 
         <section class="pet-grid" role="list" aria-label="ペット一覧">
             <button class="pet" role="listitem" data-id="pet1" data-label="ペット1" data-img="./assets/img/pet1.png" aria-pressed="false">
-                <img src="./assets/img/pet1.png" alt="ペット1のイラスト">
-                <div class="pet-name">ペット1</div>
+                <img src="./assets/img/pet1.png" alt="かっぱのイラスト">
+                <div class="pet-name">かっぱ</div>
                 <span class="badge">えらび中</span>
             </button>
             <button class="pet" role="listitem" data-id="pet2" data-label="ペット2" data-img="./assets/img/pet2.png" aria-pressed="false">
-                <img src="./assets/img/pet2.png" alt="ペット2のイラスト">
-                <div class="pet-name">ペット2</div>
+                <img src="./assets/img/pet2.png" alt="きつねのイラスト">
+                <div class="pet-name">きつね</div>
                 <span class="badge">えらび中</span>
             </button>
             <button class="pet" role="listitem" data-id="pet3" data-label="ペット3" data-img="./assets/img/pet3.png" aria-pressed="false">
-                <img src="./assets/img/pet3.png" alt="ペット3のイラスト">
-                <div class="pet-name">ペット3</div>
+                <img src="./assets/img/pet3.png" alt="おにぎりのイラスト">
+                <div class="pet-name">おにぎり</div>
                 <span class="badge">えらび中</span>
             </button>
-
+        </section>
             <div class="cta">
                 <button id="nextBtn" class="btn btn-primary" disabled>次へ</button>
             </div>
-        </section>
       </main>
     </div>
   </div>
