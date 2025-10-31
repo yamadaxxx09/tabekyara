@@ -4,19 +4,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Hachi+Maru+Pop&display=swap" rel="stylesheet">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>たべきゃら | 登録</title>
+  <title>たべきゃら | 新規登録</title>
   <link rel="stylesheet" href="./assets/styles.css" />
   <style>
-    
-    body {
-      font-family: "Hachi Maru Pop", cursive;
-    }
+    body { font-family: "Hachi Maru Pop", cursive; }
 
     .hero { 
-      display:grid; 
-      gap:28px; 
-      place-items:center; 
-      padding:100px 16px 8px; 
+      display: grid; 
+      gap: 28px; 
+      place-items: center; 
+      padding: 100px 16px 8px; 
     }
     .app-title {
       font-size: clamp(28px, 6.5vw, 40px);
@@ -26,99 +23,168 @@
       text-shadow: 0 2px 0 rgba(0,0,0,.05);
     }
 
-    .cta {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 32px;
+    .form-wrap {
+      width: 100%;
+      max-width: 360px;
+      display: grid;
+      gap: 16px;
     }
 
-    .cta a {
-      display: inline-block;
-      max-width: 300px;
-      text-align: center;
-      text-decoration: none; 
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .field { display: grid; gap: 8px; }
+    label { font-weight: 600; text-align: left; }
+
+    .input {
+      width: 90%;
+      padding: 12px 14px;
+      border: 1.5px solid #e5e1de;
+      border-radius: 8px;
+      font-size: 15px;
+      outline: none;
+      background: #fff;
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    .input:focus {
+      border-color: #ffd2bc;
+      box-shadow: 0 0 0 3px rgba(255, 169, 128, .18);
+    }
+    .input::placeholder { color: #bbb; }
+
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 14px;
+    }
+
+    .link {
+      color: #7a4b33;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      cursor: pointer;
+      background: transparent;
+      border: 0;
+      font: inherit;
+      padding: 0;
     }
 
     .btn,
     button.btn {
-    display: inline-block;
-    text-align: center;
-    text-decoration: none;
-    cursor: pointer;
-     border: none;
-    font-family: "Hachi Maru Pop", cursive;
-    font-size: 18px;
-    font-weight: 600;
-    border-radius: 999px;
-    padding: 16px 18px;
-
+      display: inline-block;
+      text-align: center;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      font-family: "Hachi Maru Pop", cursive;
+      font-size: 18px;
+      font-weight: 600;
+      border-radius: 999px;
+      padding: 16px 18px;
     }
 
     .btn-primary {
       background-color: #ffe0cf;
       border: 1px solid #ffd2bc;
       color: #444;
+      width: 100%;
     }
 
-    .btn:hover,
-      button.btn:hover {
+    .btn:hover, button.btn:hover {
       transform: translateY(-2px);
       transition: transform 0.2s ease;
     }
 
-    form {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-    }
-
-    label {
-        font-weight: 600;
-        text-align: left;
-    }
-
-    input {
-        width: 85%;
-        padding: 12px;
-        border: 1.5px solid #e5e1de;
-        border-radius: 8px;
-        font-family: 15px;
-        outline: none;
-    }
-
-    input::placeholder {
-        color: #bbb;
+    .notice {
+      text-align: center;
+      font-size: 14px;
+      color: #666;
     }
   </style>
 </head>
-<body data-page="start">
+<body data-page="register">
   <div class="phone">
     <div class="screen">
       <div class="island" aria-hidden="true"></div>
       <main id="app" class="fade">
         <section class="hero">
           <div class="app-title">アカウント登録</div>
-        <form>
-            <label for="email">メールアドレス</label>
-            <input type="email" id="email" placeholder="メールアドレスを入力" required>
 
-            <label for="password">パスワード</label>
-            <input type="password" id="password" placeholder="パスワードを入力" required>
+          <div class="form-wrap">
+            <form id="registerForm" novalidate>
+              <div class="field">
+                <label for="email">メールアドレス</label>
+                <input class="input" type="email" id="email" placeholder="メールアドレスを入力" required>
+              </div>
 
-            <button type="submit" class="btn btn-primary btn-block btn-fat">登録</button>
-        </form>
+              <div class="field">
+                <label for="password">パスワード</label>
+                <input class="input" type="password" id="password" placeholder="パスワードを入力" required>
+              </div>
 
+              <!-- 必要なら確認欄を有効化（コメント解除） 
+              <div class="field">
+                <label for="password2">パスワード（確認）</label>
+                <input class="input" type="password" id="password2" placeholder="もう一度入力">
+              </div>
+              -->
+
+              <button type="submit" class="btn btn-primary">登録</button>
+            </form>
+
+            <p class="notice">
+              すでにアカウントをお持ちの方は
+              <a href="./login.html" class="link">ログイン</a>
+            </p>
           </div>
         </section>
       </main>
-
     </div>
   </div>
 
   <script type="module">
     import { initChrome } from "./assets/common.js";
     initChrome();
+
+    const form   = document.getElementById('registerForm');
+    const email  = document.getElementById('email');
+    const pass   = document.getElementById('password');
+    // const pass2  = document.getElementById('password2'); // 使う場合は上のHTMLも有効化
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const mailVal = email.value.trim();
+      const passVal = pass.value;
+
+      if (!mailVal || !passVal) {
+        alert('メールアドレスとパスワードを入力してください');
+        return;
+      }
+      if (!/^\S+@\S+\.\S+$/.test(mailVal)) {
+        alert('メールアドレスの形式が正しくありません');
+        email.focus();
+        return;
+      }
+      // パスワード確認を使うなら
+      // if (pass2 && passVal !== pass2.value) {
+      //   alert('パスワードが一致しません');
+      //   pass2.focus();
+      //   return;
+      // }
+
+      // ここで本来はAPI / Firebase Auth でユーザー作成
+      // 成功を想定してメールを保存（ログイン画面のプレフィル用）
+      try { localStorage.setItem('tky.remember.email', mailVal); } catch {}
+
+      // オンボーディングへ（要件に合わせて調整可）
+      location.href = "./onboarding.html";
+    });
   </script>
 </body>
 </html>
