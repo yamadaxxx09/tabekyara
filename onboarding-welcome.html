@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <link href="https://fonts.googleapis.com/css2?family=Hachi+Maru+Pop&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>たべきゃら | 確認してはじめよう！</title>
+  <link rel="stylesheet" href="./assets/styles.css" />
+  <style>
+    body { font-family: "Hachi Maru Pop", cursive; }
+
+    .hero {
+      display:grid; gap:10px; place-items:center;
+      padding:84px 16px 8px; text-align:center;
+    }
+    .app-title {
+      font-size: clamp(24px, 6vw, 36px);
+      letter-spacing:.08em; font-weight:900;
+      -webkit-text-stroke:1px rgba(0,0,0,.08);
+      text-shadow:0 2px 0 rgba(0,0,0,.05);
+    }
+    .lead { color:#665; font-size:14px; }
+
+    .confirm-wrap { display:grid; gap:14px; padding:12px 16px 24px; }
+
+    .card {
+      background:#fffaf7; border:2px solid #ffe4d1; border-radius:16px;
+      box-shadow:0 3px 6px rgba(0,0,0,.04);
+      padding:12px;
+      display:grid; gap:10px;
+    }
+    .card h3 {
+      margin:0; font-size:18px; letter-spacing:.04em; display:flex; align-items:center; gap:8px;
+    }
+    .sub { color:#886; font-size:12px; }
+
+    .pet-row { display:flex; align-items:center; gap:12px; }
+    .pet-row img { width:56px; height:56px; object-fit:contain; border-radius:12px; background:#fff; border:1px solid #ffd2bc; }
+    .pet-meta { display:grid; gap:2px; }
+    .pet-name { font-size:16px; }
+    .pet-type { font-size:12px; color:#886; }
+
+    .goals { display:grid; gap:8px; }
+    .goal-chip {
+      background:#fff; border:1px solid #f5d7c6; border-radius:999px;
+      padding:8px 12px; font-size:14px; display:inline-block;
+    }
+
+    .row-actions { display:flex; gap:8px; }
+    .btn, button.btn {
+      display:inline-block; text-align:center; text-decoration:none; cursor:pointer; border:none;
+      font-family:"Hachi Maru Pop", cursive; font-size:16px; font-weight:600;
+      border-radius:999px; padding:10px 14px;
+    }
+    .btn-ghost { background:#fff; border:1px dashed #ffd2bc; color:#444; }
+    .btn-primary { background:#ffe0cf; border:1px solid #ffd2bc; color:#444; }
+
+    .cta { display:flex; justify-content:center; padding:8px 16px 28px; }
+    .hint { text-align:center; color:#886; font-size:12px; margin-top:-4px; }
+
+    .empty { color:#b88; font-size:14px; }
+  </style>
+</head>
+<body data-page="onboarding-welcome">
+  <div class="phone">
+    <div class="screen">
+      <div class="island" aria-hidden="true"></div>
+      <main id="app" class="fade">
+        <section class="hero">
+          <div class="app-title">これでスタートする？</div>
+          <div class="lead">内容を確認して OK なら「はじめる」！</div>
+        </section>
+
+        <section class="confirm-wrap" aria-label="入力内容の確認">
+          <!-- ペット -->
+          <article class="card" id="petCard" aria-live="polite">
+            <h3>ペット</h3>
+            <div class="pet-row" id="petRow">
+              <!-- 画像 / 情報をJSで差し込み -->
+            </div>
+            <div class="row-actions">
+              <a class="btn btn-ghost" href="./onboarding-pet-select.html" aria-label="ペットを変更する">変更する</a>
+            </div>
+          </article>
+
+          <!-- ペットの名前 -->
+          <article class="card" id="nameCard" aria-live="polite">
+            <h3>ペットの名前</h3>
+            <div id="petNameSlot" class="pet-name"></div>
+            <div class="row-actions">
+              <a class="btn btn-ghost" href="./onboarding-pet-name.html" aria-label="ペットの名前を変更する">変更する</a>
+            </div>
+          </article>
+
+          <!-- 目標 -->
+          <article class="card" id="goalCard" aria-live="polite">
+            <h3>目標</h3>
+            <div class="goals" id="goalList"></div>
+            <div class="row-actions">
+              <a class="btn btn-ghost" href="./onboarding-goal.html" aria-label="目標を変更する">変更する</a>
+            </div>
+            <div class="hint">※ 目標はあとからマイページでも編集できるようにしておくと親切</div>
+          </article>
+        </section>
+
+        <div class="cta">
+          <button id="startBtn" class="btn btn-primary" type="button">はじめる</button>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script type="module">
+    // ====== ストレージキー（必要なら既存実装に合わせて変更してね） ======
+    const KEY_PET      = 'tky.pet';       // 例: { id:'cat', label:'ねこ', img:'./assets/img/pets/cat.png' }
+    const KEY_PET_NAME = 'tky.petName';   // 例: 'もち'
+    const KEY_GOALS    = 'tky.goals';     // 例: ['毎日朝ごはん','週3回やさい']
+
+    // 画面フレーム等の初期化
+    try {
+      const { initChrome } = await import("./assets/common.js");
+      if (typeof initChrome === "function") initChrome();
+    } catch (e) { console.warn("initChromeの読み込みに失敗:", e); }
+
+    const $  = (s, r=document)=>r.querySelector(s);
+
+    // ====== データ復元 ======
+    function loadJSON(key, fallback=null){
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch { return fallback; }
+    }
+
+    const pet      = loadJSON(KEY_PET, null);
+    const petName  = localStorage.getItem(KEY_PET_NAME) || ''; // 名前は文字列保存の想定
+    const goals    = loadJSON(KEY_GOALS, []);
+
+    // ====== ペット表示 ======
+    (function renderPet(){
+      const slot = $('#petRow');
+      if (!slot) return;
+
+      if (!pet) {
+        slot.innerHTML = `<div class="empty">未選択です。<br>「変更する」からえらんでね。</div>`;
+        return;
+      }
+      const imgSrc = pet.img || './assets/img/pets/placeholder.png';
+      const type   = pet.label || pet.id || 'ペット';
+      slot.innerHTML = `
+        <img src="${imgSrc}" alt="${type}">
+        <div class="pet-meta">
+          <div class="pet-type">${type}</div>
+          <div class="sub">ID: ${pet.id ?? '-'}</div>
+        </div>
+      `;
+    })();
+
+    // ====== ペット名表示 ======
+    (function renderName(){
+      const slot = $('#petNameSlot');
+      if (!slot) return;
+      slot.textContent = petName ? `「${petName}」` : '未入力です。「変更する」からつけてね。';
+    })();
+
+    // ====== 目標表示 ======
+    (function renderGoals(){
+      const list = $('#goalList');
+      if (!list) return;
+      if (!Array.isArray(goals) || goals.length === 0) {
+        list.innerHTML = `<div class="empty">目標がまだありません。「変更する」から入れてね。</div>`;
+        return;
+      }
+      list.innerHTML = goals.map(g=>`<span class="goal-chip">${escapeHTML(g)}</span>`).join('');
+    })();
+
+    function escapeHTML(s){
+      return s.replace(/[&<>"']/g, (c)=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]));
+    }
+
+    // ====== はじめる → mainへ ======
+    $('#startBtn')?.addEventListener('click', ()=>{
+      // 最低限のバリデーション（ペット・名前・目標のいずれか欠けていればアラート）
+      const missing = [];
+      if (!pet) missing.push('ペット');
+      if (!petName) missing.push('ペットの名前');
+      if (!Array.isArray(goals) || goals.length === 0) missing.push('目標');
+
+      if (missing.length > 0) {
+        alert(`${missing.join('・')}が未設定です。カードの「変更する」から設定してね！`);
+        return;
+      }
+
+      // 必要ならここで初期ステータスをまとめて保存してもOK
+      // 例: localStorage.setItem('tky.profile', JSON.stringify({ pet, petName, goals }))
+
+      location.href = './main.html';
+    });
+  </script>
+</body>
+</html>

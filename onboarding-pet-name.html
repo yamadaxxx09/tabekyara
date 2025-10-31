@@ -111,30 +111,31 @@
     nameInput.addEventListener('input', validate);
 
     // 4) 決定 → プロフィール保存 → 次のページへ
-    document.getElementById('nameForm').addEventListener('submit', (e) => {
-      e.preventDefault();
+    document.getElementById('nameForm').addEventListener('submit', (e) => {e.preventDefault();
       if (!validate()) return;
 
       const profile = {
-        id: selected.id,
-        label: selected.label ?? selected.id,
-        img: selected.img,
-        name: nameInput.value.trim()
-      };
-      try { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); } catch {}
+      id: selected.id,
+      label: selected.label ?? selected.id,
+      img: selected.img,
+      name: nameInput.value.trim()
+    };
 
-      // 必要ならここで Firebase に保存してから遷移
-      // 例:
-      // const uid = getAuth().currentUser?.uid;
-      // await setDoc(doc(getFirestore(), "users", uid), { pet: profile }, { merge: true });
+    try {
+      // あなたの新実装のキー
+      localStorage.setItem('tky.petProfile', JSON.stringify(profile));
+      localStorage.setItem('tky.selectedPet', JSON.stringify(selected));
 
-      location.href = './onboarding-goal.html'; // 次のステップに合わせて変更
-    });
+      // 互換キー（既存welcomeが読む想定）
+      localStorage.setItem('tky.pet', JSON.stringify({
+        id: profile.id, label: profile.label, img: profile.img
+      }));
+      localStorage.setItem('tky.petName', profile.name);
+    } catch {}
 
-    // 5) えらび直す
-    document.getElementById('backBtn').addEventListener('click', () => {
-      location.href = './onboarding-pet-select.html';
-    });
+    location.href = './onboarding-goal.html';
+  });
+
   </script>
 </body>
 </html>
