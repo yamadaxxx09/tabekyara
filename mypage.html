@@ -8,11 +8,13 @@
         <link rel="stylesheet" href="assets/mypage.css" />
     </head>
 <body>
-    <div class="container">
+    <div class="phone">
+    <div class="screen">
+    <!-- <div class="container"> -->
         <header>
             <h1>マイページ</h1>
             <p class="user-id">user ID: tomokin1815 <span class="copy">📋 コピー</span></p>
-            <button class="edit-btn">✏️</button>
+            <button id="editBtn" class="edit-btn">✏️</button>
         </header>
 
         <main>
@@ -42,28 +44,46 @@
             </div>
         </main>
             <footer class="nav">
-            <button>👤</button>
+            <button onclick="location.href='/mypage.html'">👤</button>
             <button>👕</button>
-            <button class="active">🏠</button>
-            <button>👥</button>
-            <button>⚙️</button>
+            <button class="active" onclick="location.href='/main.html'">🏠</button>
+            <button onclick="location.href='/friends.html'">👥</button>
+            <button onclick="location.href='/settings.html'">⚙️</button>
             </footer>
     </div>
+    </div>
+    <!-- </div> -->
 
-    <script>
-        // ✏️ 編集ボタンで入力欄を切り替え
-        const editBtn = document.getElementById("editBtn");
-        const inputs = document.querySelectorAll("#username, #pet, #goal");
-        let editable = false;
+<script>
+    const editBtn = document.getElementById("editBtn");
+    const inputs = document.querySelectorAll("#username, #pet, #goal");
+    let editable = false;
 
-        editBtn.addEventListener("click", () => {
+    // ページ読み込み時に保存データを復元
+    window.addEventListener("load", () => {
+        inputs.forEach(input => {
+        const saved = localStorage.getItem(input.id);
+        if (saved) input.value = saved;
+        });
+    });
+
+    // 編集ボタンで入力欄を切り替え
+    editBtn.addEventListener("click", () => {
         editable = !editable;
         inputs.forEach(input => {
-            input.disabled = !editable;
-            input.style.background = editable ? "#fffaf0" : "#fff";
+        input.disabled = !editable;
+        input.style.background = editable ? "#fffaf0" : "#fff";
         });
         editBtn.textContent = editable ? "✅" : "✏️";
+
+        // ✅ 押されたときに保存
+        if (!editable) {
+        inputs.forEach(input => {
+            localStorage.setItem(input.id, input.value);
         });
-    </script>
+        }
+    });
+</script>
+
 </body>
 </html>
