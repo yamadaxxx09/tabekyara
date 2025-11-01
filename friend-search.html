@@ -12,9 +12,9 @@
 
         // 架空のユーザー一覧
         const mockUsers = [
-        { id: "k_yuki129", name: "ゆき", pet: "🐱", img: "assets/img/pet1.jpg" },
-        { id: "a_haru34", name: "はる", pet: "🐶", img: "assets/img/pet2.jpg" },
-        { id: "n_mika55", name: "みか", pet: "🐰", img: "assets/img/pet3.jpg" },
+        { id: "k_yuki129", name: "ゆき", pet: "🦊" },
+        { id: "a_haru34", name: "はる", pet: "🐶" },
+        { id: "n_mika55", name: "みか", pet: "🐰" },
         ];
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -41,7 +41,7 @@
             selectedUser = found;
             result.innerHTML = `
                 <div class="friend-card result">
-                <img src="${found.img}" alt="${found.name}" />
+                
                 <p>${found.name} (${found.id})</p>
                 <p>${found.pet}</p>
                 </div>`;
@@ -89,7 +89,7 @@
 
         <footer class="nav">
             <button onclick="location.href='mypage.html'">👤</button>
-            <button>👕</button>
+            <button onclick="location.href='accessory.html'">👕</button>
             <button onclick="location.href='main.html'">🏠</button>
             <button class="active" onclick="location.href='friends.html'">👥</button>
             <button onclick="location.href='settings.html'">⚙️</button>
