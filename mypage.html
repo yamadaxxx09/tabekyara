@@ -4,6 +4,7 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>マイページ</title>
+        <link href="https://fonts.googleapis.com/css2?family=Hachi+Maru+Pop&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="assets/common.css" />
         <link rel="stylesheet" href="assets/mypage.css" />
     </head>
@@ -74,7 +75,7 @@
         input.disabled = !editable;
         input.style.background = editable ? "#fffaf0" : "#fff";
         });
-        editBtn.textContent = editable ? "✅" : "✏️";
+        editBtn.textContent = editable ? "保存" : "✏️";
 
         // ✅ 押されたときに保存
         if (!editable) {

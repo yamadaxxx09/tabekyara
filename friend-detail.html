@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>フレンド詳細</title>
+    <link href="https://fonts.googleapis.com/css2?family=Hachi+Maru+Pop&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/common.css" />
+    <link rel="stylesheet" href="assets/friends.css" />
+    <script type="module">
+        import { getFriends, removeFriend } from './assets/friends.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+        const params = new URLSearchParams(location.search);
+        const friendId = params.get('id');
+        const friend = getFriends().find(f => f.id === friendId);
+
+        const detail = document.getElementById('detail');
+
+        if (!friend) {
+            detail.innerHTML = `<p>フレンドが見つかりませんでした。</p>`;
+            return;
+        }
+
+        detail.innerHTML = `
+        <div class="friend-detail-card">
+            <img src="${friend.img}" alt="${friend.name}" />
+            <h2>${friend.name}</h2>
+            <p>ID：${friend.id}</p>
+
+            <div class="pet-section">
+            <h3>ペット</h3>
+            <img src="assets/img/ponta.png" alt="ペット" class="pet-img" />
+            </div>
+
+            <button id="deleteBtn" class="btn danger">❌ フレンド削除</button>
+            <button id="backBtn" class="btn">👥 戻る</button>
+        </div>
+        `;
+
+
+        // 🔙 戻るボタン
+        document.getElementById('backBtn').addEventListener('click', () => {
+            location.href = 'friends.html';
+        });
+
+        // ❌ 削除ボタン
+        document.getElementById('deleteBtn').addEventListener('click', () => {
+            const confirmDelete = confirm(`「${friend.name}」さんを削除しますか？`);
+            if (!confirmDelete) return;
+
+            removeFriend(friend.id);
+            alert(`「${friend.name}」さんを削除しました。`);
+            location.href = 'friends.html';
+        });
+        });
+    </script>
+</head>
+
+    <body>
+    <div class="phone">
+        <div class="screen">
+        <header>
+            <h1>フレンド詳細</h1>
+        </header>
+
+        <main>
+            <div id="detail" class="center-box"></div>
+        </main>
+
+        <footer class="nav">
+            <button onclick="location.href='mypage.html'">👤</button>
+            <button>👕</button>
+            <button onclick="location.href='main.html'">🏠</button>
+            <button class="active" onclick="location.href='friends.html'">👥</button>
+            <button onclick="location.href='settings.html'">⚙️</button>
+        </footer>
+        </div>
+    </div>
+</body>
+</html>

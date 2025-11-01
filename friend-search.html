@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>フレンドを探す</title>
+    <link href="https://fonts.googleapis.com/css2?family=Hachi+Maru+Pop&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/common.css" />
+    <link rel="stylesheet" href="assets/friends.css" />
+    <script type="module">
+        import { addFriend } from './assets/friends.js';
+
+        // 架空のユーザー一覧
+        const mockUsers = [
+        { id: "k_yuki129", name: "ゆき", pet: "🐱", img: "assets/img/pet1.jpg" },
+        { id: "a_haru34", name: "はる", pet: "🐶", img: "assets/img/pet2.jpg" },
+        { id: "n_mika55", name: "みか", pet: "🐰", img: "assets/img/pet3.jpg" },
+        ];
+
+        document.addEventListener("DOMContentLoaded", () => {
+        const searchBtn = document.getElementById("searchBtn");
+        const input = document.getElementById("friendId");
+        const result = document.getElementById("resultArea");
+        const requestBtn = document.getElementById("requestBtn");
+
+        let selectedUser = null;
+
+        // 🔍 検索処理
+        searchBtn.addEventListener("click", () => {
+            const keyword = input.value.trim();
+            result.innerHTML = "";
+            selectedUser = null;
+
+            if (!keyword) {
+            result.innerHTML = `<p>ユーザーIDを入力してください。</p>`;
+            return;
+            }
+
+            const found = mockUsers.find(u => u.id === keyword);
+            if (found) {
+            selectedUser = found;
+            result.innerHTML = `
+                <div class="friend-card result">
+                <img src="${found.img}" alt="${found.name}" />
+                <p>${found.name} (${found.id})</p>
+                <p>${found.pet}</p>
+                </div>`;
+            requestBtn.disabled = false;
+            } else {
+            result.innerHTML = `<p>ユーザーが見つかりませんでした。</p>`;
+            requestBtn.disabled = true;
+            }
+        });
+
+        // ✉️ リクエスト送信（実際はフレンド追加）
+        requestBtn.addEventListener("click", () => {
+            if (selectedUser) {
+            addFriend(selectedUser);
+            alert(`${selectedUser.name} さんをフレンドに追加しました！`);
+            location.href = "friends.html";
+            }
+        });
+        });
+    </script>
+</head>
+
+    <body>
+    <div class="phone">
+        <div class="screen">
+        <header>
+            <h1>フレンドページ</h1>
+        </header>
+
+        <main>
+            <div class="center-box">
+            <button class="btn" onclick="location.href='friends.html'">👥 戻る</button>
+
+            <div class="search-box card">
+                <h2>フレンドを探そう！</h2>
+                <div class="input-row">
+                <input type="text" id="friendId" placeholder="user ID: 例 k_yuki129" />
+                <button id="searchBtn" class="search-icon">🔍</button>
+                </div>
+                <div id="resultArea" class="result-box"></div>
+                <button id="requestBtn" class="btn wide" disabled>フレンドリクエストする</button>
+            </div>
+            </div>
+        </main>
+
+        <footer class="nav">
+            <button onclick="location.href='mypage.html'">👤</button>
+            <button>👕</button>
+            <button onclick="location.href='main.html'">🏠</button>
+            <button class="active" onclick="location.href='friends.html'">👥</button>
+            <button onclick="location.href='settings.html'">⚙️</button>
+        </footer>
+        </div>
+    </div>
+</body>
+</html>

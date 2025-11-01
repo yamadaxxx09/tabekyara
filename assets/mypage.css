@@ -19,6 +19,7 @@ body {
     place-items: center;
     background: radial-gradient(1200px 700px at 50% -10%, #151a22, var(--bg));
     color: var(--text);
+    
 }
 
 /* ---- iPhoneフレーム風 ---- */
@@ -44,18 +45,6 @@ body {
     grid-template-rows: auto 1fr auto; /* header, main, tabbar */
 }
 
-/* body {
-    font-family: "Rounded Mplus 1c", sans-serif;
-    background: repeating-linear-gradient(
-        135deg,
-        #ffe5e5,
-        #ffe5e5 20px,
-        #ffd6d6 20px,
-        #ffd6d6 40px
-    );
-    margin: 0;
-    padding: 0;
-} */
 
 .container {
     display: flex;
@@ -76,6 +65,7 @@ h1 {
     margin-bottom: 10px;
     justify-content: center; /* ← 水平中央寄せ */
     align-items: center;
+    font-family:"Hachi Maru Pop",cursive
 }
 
 .user-id {
