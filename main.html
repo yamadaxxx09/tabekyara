@@ -12,6 +12,12 @@
     :root{
       --top-gap: clamp(16px, 6vh, 56px);
       --overlap: 10px;
+      --float-bobY: 12px;
+      --float-swayX: 5px;
+      --float-tilt: 2deg;
+      --float-bobT: 1.8s;
+      --float-swayT: 2.2s;
+      --tabbar-h: 64px;
     }
 
     html,body{
@@ -43,8 +49,22 @@
     .pet-stage{ position:relative; display:grid; justify-items:center; text-align:center; overflow:visible; gap:0; }
     .pet-name{ position:absolute; top:8px; font-size:clamp(18px,4.2vw,22px); color:#A3A649; letter-spacing:.03em; z-index:3; }
     .pet-canvas{ position:relative; display:grid; place-items:center; width:fit-content; }
-    #petCanvas{ width:min(82dvw,400px)!important; max-height:54vh!important; margin:0 auto 0!important; background:none; border:none; display:grid; place-items:center; position:relative; }
-    .pet-canvas img{ width:100%; height:auto; object-fit:contain; display:block; transform-origin:50% 80%; }
+
+    /* ★ 画像の入れ物に比率を与えて潰れを防止 */
+    #petCanvas{
+      width:min(82dvw,400px) !important;
+      aspect-ratio: 1 / 1;
+      margin:0 auto 0 !important;
+      background:none; border:none;
+      display:grid; place-items:center; position:relative;
+    }
+    /* 画像は入れ物にフィット */
+    .pet-canvas img{
+      width:100%; height:100%;
+      object-fit:contain; display:block;
+      transform-origin:50% 80%;
+    }
+
     .row-overlay{ position:absolute; left:0; right:0; bottom:calc(var(--overlap) * -1); display:flex; justify-content:center; z-index:4; }
     #feedBtn{ font-size:19px; padding:12px 22px; margin:0!important; box-shadow:0 4px 14px rgba(0,0,0,.12); }
 
@@ -96,6 +116,20 @@
     .modal-form small{ font-size:12px; color:#777; }
     .modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:12px; padding-top:12px; border-top:1px solid var(--line2); }
     @keyframes popIn{ from{opacity:0; transform:scale(.95);} to{opacity:1; transform:scale(1);} }
+
+    /* ==== ふわゆら（ラッパーに付与） ==== */
+    @keyframes bobY { from { transform: translateY(-12px); } to { transform: translateY(12px); } }
+    @keyframes swayXR { from { transform: translateX(-5px) rotate(-2deg); } to { transform: translateX(5px) rotate(2deg); } }
+    .floaty {
+      animation: bobY var(--float-bobT) ease-in-out infinite alternate,
+                 swayXR var(--float-swayT) ease-in-out infinite alternate;
+      transform-origin: 50% 80%;
+      will-change: transform;
+      backface-visibility: hidden;
+    }
+    .floaty-wrap{ position:relative; width:100%; height:100%; }
+
+    @media (prefers-reduced-motion: reduce) { .floaty { animation:none !important; } }
   </style>
 </head>
 
@@ -122,7 +156,7 @@
           </article>
 
           <article class="card">
-            <h3 style="margin:0; font-size:16px;">きろく</h3>
+            <h3 style="margin:10px 5px; font-size:16px;">きろく</h3>
             <div id="log" class="log" aria-live="polite"></div>
           </article>
         </section>
@@ -384,19 +418,22 @@ function countThinStreakEndingAt(dayStr){
     const K = { PET:'tky.pet', PET_NAME:'tky.petName', MEAL_LOG:'tky.mealLog', APPEARANCE:'tky.appearance' };
     const $ = (s,r=document)=>r.querySelector(s);
     function loadJSON(k,f=null){ try{const r=localStorage.getItem(k); return r?JSON.parse(r):f;}catch{return f;} }
+
     const pet = loadJSON(K.PET,null);
     const petName = localStorage.getItem(K.PET_NAME)||'';
     const PLACEHOLDER = './assets/img/placeholder.png';
     const petImg = $('#petImg');
 
-    // ====== 日次変化ロジック ======
-    const ENERGY_SCORE={low:1,mid:2,high:3};
-    const VEGGIE_BONUS={low:0,mid:1,high:2};
-    const FAT_THRESHOLD=8, THIN_THRESHOLD=3;
-    const FAT_STREAK_N=2, THIN_STREAK_N=2, BALANCED_STREAK_N=2;
-    const TRANSITION_GIF_MS=2200;
-    const SPARKLE_RULE=(p,v,c)=> (p==='mid'&&v==='mid'&&c==='mid')||(v==='high'&&(p!=='high'&&c!=='high'));
+    /* ========= 安全ローダー：404ならplaceholderへ ========= */
+    function setPetSrcSafe(imgEl, src, placeholder = './assets/img/placeholder.png') {
+      if (!imgEl) return;
+      const test = new Image();
+      test.onload  = () => { imgEl.src = src; };
+      test.onerror = () => { imgEl.src = placeholder; };
+      test.src = src;
+    }
 
+    /* ========= スプライト定義 ========= */
     function staticSpriteFor(state){
       switch(state){
         case 'fat':return'./assets/img/fat.jpg';
@@ -407,114 +444,76 @@ function countThinStreakEndingAt(dayStr){
 main
     }
     function transitionAnimFor(state){
-      if(state==='fat')return{gif:'./assets/gif/fat.gif',ms:TRANSITION_GIF_MS};
-      if(state==='thin')return{gif:'./assets/gif/thin.gif',ms:TRANSITION_GIF_MS};
-      if(state==='sparkle')return{gif:'./assets/gif/kirakira.gif',ms:TRANSITION_GIF_MS};
+      if(state==='fat')return{gif:'./assets/gif/fat.gif',ms:2200};
+      if(state==='thin')return{gif:'./assets/gif/thin.gif',ms:2200};
+      if(state==='sparkle')return{gif:'./assets/gif/kirakira.gif',ms:2200};
       return null;
     }
 
+    /* ========= 見た目の保存 ========= */
     function fmtDate(d=new Date()){return d.toISOString().slice(0,10);}
-    function yesterdayStr(){const d=new Date();d.setDate(d.getDate()-1);return fmtDate(d);}
     function getAppearance(){return loadJSON(K.APPEARANCE,null);}
     function setAppearance(o){localStorage.setItem(K.APPEARANCE,JSON.stringify(o));}
 
-    function countStreakEndingAt(dayStr,isTargetDay){
-      const raw=localStorage.getItem(K.MEAL_LOG);const log=raw?JSON.parse(raw):{};let streak=0;let d=new Date(dayStr);
-      for(;;){const key=fmtDate(d);const items=log[key]||[];if(items.length===0)break;
-        if(isTargetDay(items)){streak++;d.setDate(d.getDate()-1);}else break;}
-      return streak;
+    /* ========= その食事だけで即判定 ========= */
+    function computeStateFromEntry(entry){
+      const ENERGY_SCORE={low:1,mid:2,high:3};
+      const VEGGIE_BONUS={low:0,mid:1,high:2};
+      const FAT_THRESHOLD=8;   // これ以上なら「太る」
+      const THIN_THRESHOLD=3;  // これ未満なら「痩せる」
+      const SPARKLE_RULE=(p,v,c)=> (p==='mid'&&v==='mid'&&c==='mid')||(v==='high'&&(p!=='high'&&c!=='high'));
+
+      const energy = (ENERGY_SCORE[entry.protein]||0)
+                   + (ENERGY_SCORE[entry.carb]||0)
+                   + (VEGGIE_BONUS[entry.veggie]||0);
+
+      const balanced = SPARKLE_RULE(entry.protein, entry.veggie, entry.carb);
+
+      // 優先順位：きらきら > 太る > 痩せる > 通常
+      if (balanced) return 'sparkle';
+      if (energy >= FAT_THRESHOLD) return 'fat';
+      if (energy < THIN_THRESHOLD) return 'thin';
+      return 'normal';
     }
 
-    function dayEnergyAndFlags(items){
-      let energy=0;let balanced=false;
-      for(const it of items){
-        energy+=(ENERGY_SCORE[it.protein]||0)+(ENERGY_SCORE[it.carb]||0)+(VEGGIE_BONUS[it.veggie]||0);
-        if(SPARKLE_RULE(it.protein,it.veggie,it.carb))balanced=true;
-      }
-      return{energy,balanced};
-    }
-
-    function evaluateDay(dayStr){
-      const raw=localStorage.getItem(K.MEAL_LOG);
-      const log=raw?JSON.parse(raw):{};
-      const items=log[dayStr]||[];
-      if(items.length===0)return{state:'normal',info:{reason:'no_meal'}};
-
-      const {energy,balanced}=dayEnergyAndFlags(items);
-      const isFatDay=a=>dayEnergyAndFlags(a).energy>=FAT_THRESHOLD;
-      const isThinDay=a=>dayEnergyAndFlags(a).energy<THIN_THRESHOLD;
-      const isBalDay=a=>dayEnergyAndFlags(a).balanced===true;
-      const fatStreak=countStreakEndingAt(dayStr,isFatDay);
-      const thinStreak=countStreakEndingAt(dayStr,isThinDay);
-      const balStreak=countStreakEndingAt(dayStr,isBalDay);
-      if(balStreak>=BALANCED_STREAK_N)return{state:'sparkle'};
-      if(fatStreak>=FAT_STREAK_N)return{state:'fat'};
-      if(thinStreak>=THIN_STREAK_N)return{state:'thin'};
-      return{state:'normal'};
-    }
-
-    async function applyAppearance(state, { playTransitionIfAny = false } = {}) {
-  // ★ ここが重要：もぐもぐ中・ホールド中・遷移中は上書きしない
-  if (Date.now() < eatHoldUntil || isChewing || isTransitioning) return;
-
-  const target = staticSpriteFor(state) + '?t=' + Date.now();
-
-  if (playTransitionIfAny && (state === 'fat' || state === 'thin' || state === 'sparkle')) {
-    const trans = transitionAnimFor(state);
-    if (trans?.gif) {
-      try {
-        isTransitioning = true;
-        if (petImg) petImg.src = trans.gif + '?t=' + Date.now();
-        await new Promise(r => setTimeout(r, trans.ms));
-      } finally {
-        isTransitioning = false;
-      }
-    }
-  }
-  if (petImg) petImg.src = target;
-}
-
-    function dailyEvaluateIfNeeded(){
-      const today=fmtDate();const yest=yesterdayStr();const ap=getAppearance();
-            if(!ap || ap.lastEval!==today){
-        const result=evaluateDay(yest);
-        const state=result.state;
-        const changedToday=(state!==ap?.state);
-        setAppearance({
-          petId:(pet?.id||'pet'),
-          state,
-          since:(changedToday?today:(ap?.since||today)),
-          lastEval:today
-        });
-        applyAppearance(state,{playTransitionIfAny:changedToday});
-      }else{
-        applyAppearance(ap.state,{playTransitionIfAny:false});
-      }
-    }
-
-    // ====== もぐもぐアニメーション ======
-    const CHEW_SRC={gif:'./assets/gif/mogumogu.gif',jpg:'./assets/img/mogumogu.jpg'};
-    const CHEW_GIF_MS=4000, CHEW_HOLD_MS=12000;
-    let eatHoldUntil=0, isChewing=false, chewTimers={gif:null,hold:null};
+    /* ========= 外観反映（即時アニメ対応） ========= */
     let isTransitioning = false;
 
-    function clearChewTimers(){
-      if(chewTimers.gif){clearTimeout(chewTimers.gif);}
-      if(chewTimers.hold){clearTimeout(chewTimers.hold);}
+    async function applyAppearance(state, { playTransitionIfAny = false } = {}) {
+      const target = staticSpriteFor(state) + '?t=' + Date.now();
+
+      if (playTransitionIfAny && (state === 'fat' || state === 'thin' || state === 'sparkle')) {
+        const trans = transitionAnimFor(state);
+        if (trans?.gif) {
+          try {
+            isTransitioning = true;
+            setPetSrcSafe(petImg, trans.gif + '?t=' + Date.now());
+            await new Promise(r => setTimeout(r, trans.ms));
+          } finally {
+            isTransitioning = false;
+          }
+        }
+      }
+      setPetSrcSafe(petImg, target);
     }
 
-    async function playChewOnce(){
-      clearChewTimers();
-      isChewing=true;
-      petImg.src=CHEW_SRC.gif+'?t='+Date.now();
-      chewTimers.gif=setTimeout(()=>{
-        petImg.src=CHEW_SRC.jpg+'?t='+Date.now();
-        eatHoldUntil=Date.now()+CHEW_HOLD_MS;
-        chewTimers.hold=setTimeout(()=>{eatHoldUntil=0;isChewing=false;},CHEW_HOLD_MS);
-      },CHEW_GIF_MS);
+    /* ========= もぐもぐ（ホールドなし） ========= */
+    const CHEW_SRC={gif:'./assets/gif/mogumogu.gif',jpg:'./assets/img/mogumogu.jpg'};
+    const CHEW_GIF_MS=2000;
+    let chewTimer=null;
+
+    function playChewOnce(){
+      if (chewTimer) { clearTimeout(chewTimer); chewTimer=null; }
+      setPetSrcSafe(petImg, CHEW_SRC.gif + '?t=' + Date.now());
+      return new Promise(resolve=>{
+        chewTimer = setTimeout(()=>{
+          setPetSrcSafe(petImg, CHEW_SRC.jpg + '?t=' + Date.now());
+          resolve();
+        }, CHEW_GIF_MS);
+      });
     }
 
-    // ====== 食事入力処理 ======
+    /* ========= 食事入力処理 ========= */
     const modal=$('#foodModal');
     const foodForm=$('#foodForm');
     const foodCancel=$('#foodCancel');
@@ -547,27 +546,53 @@ main
       logEl.prepend(div);
     }
 
-    foodForm.addEventListener('submit',async e=>{
+    foodForm.addEventListener('submit', async e=>{
       e.preventDefault();
       const fd=new FormData(foodForm);
-      const data={protein:fd.get('protein'),veggie:fd.get('veggie'),carb:fd.get('carb')};
+      const entry={protein:fd.get('protein'),veggie:fd.get('veggie'),carb:fd.get('carb')};
+
       closeModal();
-      addLogRow(data);
-      saveMealForToday(data);
+      addLogRow(entry);
+      saveMealForToday(entry);
+
+      // 1) もぐもぐ
       await playChewOnce();
-      setTimeout(() => {
-        dailyEvaluateIfNeeded();
-      }, CHEW_GIF_MS + 200);
+
+      // 2) 即判定 → アニメ → 静止
+      const state = computeStateFromEntry(entry);
+      await applyAppearance(state, { playTransitionIfAny: true });
+
+      // 3) 最終見た目を保存（任意）
+      setAppearance({
+        petId:(pet?.id||'pet'),
+        state,
+        since: fmtDate(),
+        lastEval: fmtDate()
+      });
+
+      // ラジオ選択をリセット（任意）
+      foodForm.reset();
     });
 
-    // ====== 初期描画 ======
+    /* ========= 初期描画 ========= */
     (function(){
       const nameEl=$('#petMeta');
       if(nameEl) nameEl.textContent = petName ? `${petName}（${pet?.label||'ペット'}）` : (pet?.label||'ペット');
-      petImg.src=PLACEHOLDER;
-      dailyEvaluateIfNeeded();
+
+      // ふわゆら用ラッパー
+      const canvas = document.getElementById('petCanvas');
+      if (canvas && petImg && !petImg.parentElement.classList.contains('floaty-wrap')) {
+        const wrap = document.createElement('div');
+        wrap.className = 'floaty-wrap floaty';
+        canvas.insertBefore(wrap, petImg);
+        wrap.appendChild(petImg);
+      }
+
+      // 初期画像：保存された見た目があればそれ、なければ通常
+      const ap=getAppearance();
+      const initState = ap?.state || 'normal';
+      setPetSrcSafe(petImg, staticSpriteFor(initState));
     })();
   </script>
 </body>
 </html>
-
