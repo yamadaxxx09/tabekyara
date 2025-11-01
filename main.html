@@ -7,8 +7,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Hachi+Maru+Pop&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./assets/styles.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/css/all.min.css">
+
   <style>
-    :root{ --top-gap: clamp(16px, 6vh, 56px); --overlap: 10px; }
+    :root{
+      --top-gap: clamp(16px, 6vh, 56px);
+      --overlap: 10px;
+    }
 
     html,body{
       height:100%; margin:0;
@@ -16,7 +20,6 @@
       background:var(--bg);
     }
 
-    /* 1画面固定・スクロールなし */
     .phone,.screen{
       height:100svh; display:flex; flex-direction:column;
       overflow:hidden;
@@ -31,78 +34,29 @@
     }
 
     .hero{ display:grid; place-items:center; text-align:center; gap:6px; padding:16px 16px 4px; margin-top:44px; }
-    .app-title{
-      font-size:clamp(22px,5.2vw,30px); font-weight:900; letter-spacing:.08em;
-      -webkit-text-stroke:1px rgba(0,0,0,.06); line-height:1.05;
-    }
+    .app-title{ font-size:clamp(22px,5.2vw,30px); font-weight:900; letter-spacing:.08em; -webkit-text-stroke:1px rgba(0,0,0,.06); line-height:1.05; }
     .lead{ color:var(--sub); font-size:13px; }
 
     .main-wrap{ display:grid; gap:12px; padding:20px 16px 0; }
-
     .card{ background:none; border:none; box-shadow:none; border-radius:0; display:grid; gap:10px; margin-top:6px; }
 
-    /* ===== ペット＆ボタン重ね ===== */
-    .pet-stage{
-      position:relative;
-      display:grid;
-      justify-items:center;
-      text-align:center;
-      overflow:visible; /* はみ出しを見せる */
-      gap:0;           /* 余白ゼロ */
-    }
-
-    .pet-name{
-      position:absolute; top:8px; font-size:clamp(18px,4.2vw,22px);
-      color:#A3A649; letter-spacing:.03em; z-index:3;
-    }
-
-    .pet-canvas{
-      position:relative;         /* ← ボタンの基準にする */
-      display:grid; place-items:center;
-      width:fit-content;
-    }
-
-    #petCanvas{
-      width:min(82dvw,400px) !important;
-      max-height:54vh !important;
-      margin:0 auto 0 !important; /* 下余白ゼロ（重ねるので不要） */
-      background:none; border:none; box-shadow:none; border-radius:0;
-      display:grid; place-items:center; position:relative;
-    }
-
-    .pet-canvas img{
-      width:100%; height:auto; object-fit:contain; display:block; transform-origin:50% 80%;
-    }
-
-    .fx-layer{ position:absolute; inset:0; pointer-events:none; z-index:2; }
-
-
-    /* ここが重ねる肝：画像の中に絶対配置 */
-    .row-overlay{
-      position:absolute;
-      left:0; right:0;
-      bottom:calc(var(--overlap) * -1); /* 下端から食い下がる量（重なり） */
-      display:flex; justify-content:center;
-      z-index:4; /* 画像より上 */
-      pointer-events:auto;
-    }
-
-    #feedBtn{
-      font-size:19px; padding:12px 22px; margin:0 !important;
-      box-shadow:0 4px 14px rgba(0,0,0,.12);
-    }
+    .pet-stage{ position:relative; display:grid; justify-items:center; text-align:center; overflow:visible; gap:0; }
+    .pet-name{ position:absolute; top:8px; font-size:clamp(18px,4.2vw,22px); color:#A3A649; letter-spacing:.03em; z-index:3; }
+    .pet-canvas{ position:relative; display:grid; place-items:center; width:fit-content; }
+    #petCanvas{ width:min(82dvw,400px)!important; max-height:54vh!important; margin:0 auto 0!important; background:none; border:none; display:grid; place-items:center; position:relative; }
+    .pet-canvas img{ width:100%; height:auto; object-fit:contain; display:block; transform-origin:50% 80%; }
+    .row-overlay{ position:absolute; left:0; right:0; bottom:calc(var(--overlap) * -1); display:flex; justify-content:center; z-index:4; }
+    #feedBtn{ font-size:19px; padding:12px 22px; margin:0!important; box-shadow:0 4px 14px rgba(0,0,0,.12); }
 
     .log{ font-size:12px; color:var(--sub); display:grid; gap:6px; max-height:22vh; overflow:auto; }
     .log-item{ background:#fff; border:1px dashed var(--line); border-radius:8px; padding:6px 8px; }
 
-    /* タブバー */
     .tabbar{
       position:absolute; bottom:0; left:0; width:100%;
       display:grid; grid-template-columns:repeat(5,1fr); gap:6px;
       background:#fff; border-top:2px solid var(--line2);
       padding:6px 6px calc(6px + env(safe-area-inset-bottom));
-      height:var(--tabbar-h); box-sizing:border-box;
-      flex-shrink:0;
+      height:var(--tabbar-h); box-sizing:border-box; flex-shrink:0;
     }
     .tabbar .tab{
       display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
@@ -111,53 +65,44 @@
     }
     .tabbar .tab i{ font-size:20px; line-height:1; }
     .tabbar .tab.active{ background:#ffe6d7; border-color:#ffccb3; color:#A3A649; }
-    .tabbar .tab:focus-visible{ outline:2px solid #ffb999; outline-offset:2px; }
+
+    /* === モーダル（中央カード型） === */
+    .screen{ position:relative; overflow:hidden; }
+    .modal-backdrop{
+      position:absolute; inset:0; display:none;
+      align-items:center; justify-content:center;
+      background:rgba(0,0,0,.25);
+      backdrop-filter:saturate(120%) blur(2px);
+      z-index:100; transition:opacity .25s ease; opacity:0;
+    }
+    .modal-backdrop[aria-hidden="false"]{ display:flex; opacity:1; }
+    .modal-dialog{
+      background:#fffaf7; border:2px solid var(--line2); border-radius:20px;
+      box-shadow:0 8px 30px rgba(0,0,0,.15);
+      width:90%; max-width:360px; max-height:80%;
+      padding:20px 20px 16px; overflow-y:auto;
+      animation: popIn .25s ease-out both; font-family:"Hachi Maru Pop",cursive;
+    }
+    .modal-dialog h3{ font-size:18px; margin:0 0 6px; color:#444; }
+    .modal-lead{ margin:0 0 12px; color:var(--sub); font-size:13px; }
+    .modal-form{ display:grid; gap:14px; font-size:15px; }
+    .modal-form fieldset{ border:none; margin:0; padding:0; display:grid; gap:6px; }
+    .modal-form legend{ font-weight:700; font-size:15px; margin-bottom:4px; color:#553; }
+    .modal-form label{ background:#fff7f1; border:1px solid var(--line); border-radius:12px;
+      padding:10px 12px; display:flex; align-items:flex-start; gap:10px; transition:background .2s, transform .1s; }
+    .modal-form label:hover{ background:#ffe9de; transform:translateY(-1px); }
+    .modal-form input[type="radio"]{ transform:scale(1.2); accent-color:#A3A649; }
+    .modal-form label div{ display:flex; flex-direction:column; line-height:1.3; }
+    .modal-form small{ font-size:12px; color:#777; }
+    .modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:12px; padding-top:12px; border-top:1px solid var(--line2); }
+    @keyframes popIn{ from{opacity:0; transform:scale(.95);} to{opacity:1; transform:scale(1);} }
   </style>
 </head>
+
 <body data-page="main">
   <div class="phone">
     <div class="screen">
-      <div class="island" aria-hidden="true"></div>
-      <!-- ごはん選択モーダル -->
-      <div id="foodModal" aria-hidden="true"
-          style="position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.25); z-index:9999;">
-        <div role="dialog" aria-modal="true" aria-labelledby="foodTitle"
-            style="background:#fff; border:2px solid var(--line2); border-radius:16px; width:min(92vw,520px); max-width:520px; padding:16px; box-shadow:0 14px 40px rgba(0,0,0,.18);">
-          <h3 id="foodTitle" style="margin:0 0 8px; font-size:18px;">ごはんをえらぶ</h3>
-
-          <p style="margin:0 0 8px; color:var(--sub); font-size:13px;">今日のごはんのバランスを教えてね</p>
-
-          <form id="foodForm" style="display:grid; gap:10px; font-size:14px;">
-            <fieldset style="border:none; padding:0; margin:0;">
-              <legend style="font-weight:700; margin-bottom:6px;">主菜（タンパク質）</legend>
-              <label><input type="radio" name="protein" value="low"  required> すくなめ（豆腐・卵少し）</label>
-              <label><input type="radio" name="protein" value="mid"> ふつう（鶏・魚など適量）</label>
-              <label><input type="radio" name="protein" value="high"> おおめ（牛・豚・揚げ物たっぷり）</label>
-            </fieldset>
-
-            <fieldset style="border:none; padding:0; margin:0;">
-              <legend style="font-weight:700; margin-bottom:6px;">野菜・果物</legend>
-              <label><input type="radio" name="veggie" value="low"  required> すくなめ</label>
-              <label><input type="radio" name="veggie" value="mid"> ふつう</label>
-              <label><input type="radio" name="veggie" value="high"> たっぷり</label>
-            </fieldset>
-
-            <fieldset style="border:none; padding:0; margin:0;">
-              <legend style="font-weight:700; margin-bottom:6px;">主食（ごはん・パン等）</legend>
-              <label><input type="radio" name="carb" value="low"  required> すくなめ</label>
-              <label><input type="radio" name="carb" value="mid"> ふつう</label>
-              <label><input type="radio" name="carb" value="high"> おおめ</label>
-            </fieldset>
-
-            <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:8px;">
-              <button type="button" id="foodCancel" class="btn" style="background:#fff7f1; border:1px solid var(--line);">やめる</button>
-              <button type="submit" class="btn" id="foodOK">OK</button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      <main id="app" class="fade">
+      <main id="app">
         <section class="hero">
           <div class="app-title">ペットと<br>ごはんの時間</div>
           <div class="lead">「ごはん」ボタンで育てよう！</div>
@@ -168,21 +113,7 @@
             <div class="pet-stage">
               <div class="pet-canvas" id="petCanvas">
                 <div id="petMeta" class="pet-name"></div>
-                <img id="petImg" src="./assets/img/pets/placeholder.png" alt="ペット" decoding="async" loading="lazy">
-                <div class="fx-layer" id="fx">
-                  <img id="sparkleFx" src="./assets/gif/kirakira.gif"
-       alt="" style="position:absolute; inset:0; width:100%; height:100%; object-fit:contain; display:none;">
-                </div>
-                <!-- 画像の上に動画（再生時だけ表示） -->
-                <video id="petAnim"
-                       playsinline
-                       muted
-                       preload="auto"
-                       poster="./assets/img/pets/placeholder.png"
-                       style="position:absolute; inset:0; width:100%; height:100%; object-fit:contain; display:none; z-index:2;">
-                  <!-- WebM優先＋MP4フォールバック（あれば） -->
-                  <!-- ソースはJSで切り替えるので最初は空でOK -->
-                </video>
+                <img id="petImg" src="./assets/img/placeholder.png" alt="ペット">
                 <div class="row-overlay">
                   <button id="feedBtn" class="btn" type="button">🍙 ごはんをあげる</button>
                 </div>
@@ -197,27 +128,50 @@
         </section>
       </main>
 
-      <nav class="tabbar" role="navigation" aria-label="メインナビ">
-        <button class="tab" aria-label="マイページ" onclick="location.href='mypage.html'">
-          <i class="fa-solid fa-user"></i><span>My Page</span>
-        </button>
-        <button class="tab" aria-label="着せ替え" onclick="location.href='accessory.html'">
-          <i class="fa-solid fa-shirt"></i><span>着せ替え</span>
-        </button>
-        <button class="tab active" aria-current="page" aria-label="ホーム" onclick="location.href='main.html'">
-          <i class="fa-solid fa-house"></i><span>Home</span>
-        </button>
-        <button class="tab" aria-label="友だち" onclick="location.href='friends.html'">
-          <i class="fa-solid fa-user-group"></i><span>友だち</span>
-        </button>
-        <button class="tab" aria-label="設定" onclick="location.href='settings.html'">
-          <i class="fa-solid fa-gear"></i><span>設定</span>
-        </button>
+      <!-- ごはんモーダル -->
+      <div id="foodModal" class="modal-backdrop" aria-hidden="true">
+        <div role="dialog" aria-modal="true" aria-labelledby="foodTitle" class="modal-dialog">
+          <h3 id="foodTitle">ごはんをえらぶ</h3>
+          <p class="modal-lead">今日のごはんのバランスを教えてね</p>
+          <form id="foodForm" class="modal-form">
+            <fieldset>
+              <legend>主菜（タンパク質）</legend>
+              <label><input type="radio" name="protein" value="low" required><div><div>すくなめ</div><small>（豆腐・卵少しなど軽め）</small></div></label>
+              <label><input type="radio" name="protein" value="mid"><div><div>ふつう</div><small>（鶏や魚などをしっかり一品）</small></div></label>
+              <label><input type="radio" name="protein" value="high"><div><div>おおめ</div><small>（牛・豚・揚げ物たっぷり）</small></div></label>
+            </fieldset>
+            <fieldset>
+              <legend>野菜・果物</legend>
+              <label><input type="radio" name="veggie" value="low" required><div><div>すくなめ</div><small>（野菜なし・少し）</small></div></label>
+              <label><input type="radio" name="veggie" value="mid"><div><div>ふつう</div><small>（サラダや副菜1〜2品）</small></div></label>
+              <label><input type="radio" name="veggie" value="high"><div><div>たっぷり</div><small>（野菜中心・果物も◎）</small></div></label>
+            </fieldset>
+            <fieldset>
+              <legend>主食（ごはん・パン等）</legend>
+              <label><input type="radio" name="carb" value="low" required><div><div>すくなめ</div><small>（少なめ・半分量）</small></div></label>
+              <label><input type="radio" name="carb" value="mid"><div><div>ふつう</div><small>（お茶碗1杯・パン1枚ほど）</small></div></label>
+              <label><input type="radio" name="carb" value="high"><div><div>おおめ</div><small>（おかわり・麺＋ご飯など）</small></div></label>
+            </fieldset>
+            <div class="modal-actions">
+              <button type="button" id="foodCancel" class="btn" style="background:#fff7f1; border:1px solid var(--line);">やめる</button>
+              <button type="submit" class="btn" id="foodOK">OK</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <nav class="tabbar">
+        <button class="tab" onclick="location.href='mypage.html'"><i class="fa-solid fa-user"></i><span>My Page</span></button>
+        <button class="tab" onclick="location.href='accessory.html'"><i class="fa-solid fa-shirt"></i><span>着せ替え</span></button>
+        <button class="tab active" onclick="location.href='main.html'"><i class="fa-solid fa-house"></i><span>Home</span></button>
+        <button class="tab" onclick="location.href='friends.html'"><i class="fa-solid fa-user-group"></i><span>友だち</span></button>
+        <button class="tab" onclick="location.href='settings.html'"><i class="fa-solid fa-gear"></i><span>設定</span></button>
       </nav>
     </div>
   </div>
 
   <script type="module">
+mypage
   const KEY_PET='tky.pet', KEY_PET_NAME='tky.petName';
   const $=(s,r=document)=>r.querySelector(s);
   function loadJSON(k,f=null){try{const r=localStorage.getItem(k);return r?JSON.parse(r):f;}catch{return f}}
@@ -426,147 +380,194 @@ function countThinStreakEndingAt(dayStr){
     let energy = 0;
     for(const it of items){
       energy += (ENERGY_SCORE[it.protein]||0) + (ENERGY_SCORE[it.carb]||0) + (VEGGIE_BONUS[it.veggie]||0);
+=======
+    const K = { PET:'tky.pet', PET_NAME:'tky.petName', MEAL_LOG:'tky.mealLog', APPEARANCE:'tky.appearance' };
+    const $ = (s,r=document)=>r.querySelector(s);
+    function loadJSON(k,f=null){ try{const r=localStorage.getItem(k); return r?JSON.parse(r):f;}catch{return f;} }
+    const pet = loadJSON(K.PET,null);
+    const petName = localStorage.getItem(K.PET_NAME)||'';
+    const PLACEHOLDER = './assets/img/placeholder.png';
+    const petImg = $('#petImg');
+
+    // ====== 日次変化ロジック ======
+    const ENERGY_SCORE={low:1,mid:2,high:3};
+    const VEGGIE_BONUS={low:0,mid:1,high:2};
+    const FAT_THRESHOLD=8, THIN_THRESHOLD=3;
+    const FAT_STREAK_N=2, THIN_STREAK_N=2, BALANCED_STREAK_N=2;
+    const TRANSITION_GIF_MS=2200;
+    const SPARKLE_RULE=(p,v,c)=> (p==='mid'&&v==='mid'&&c==='mid')||(v==='high'&&(p!=='high'&&c!=='high'));
+
+    function staticSpriteFor(state){
+      switch(state){
+        case 'fat':return'./assets/img/fat.jpg';
+        case 'thin':return'./assets/img/thin.jpg';
+        case 'sparkle':return'./assets/img/kirakira.jpg';
+        default:return(pet?.img||PLACEHOLDER);
+      }
+main
     }
-    if (items.length>0 && energy < THIN_THRESHOLD){
-      streak += 1;
-      d.setDate(d.getDate()-1);
-    } else {
-      break;
+    function transitionAnimFor(state){
+      if(state==='fat')return{gif:'./assets/gif/fat.gif',ms:TRANSITION_GIF_MS};
+      if(state==='thin')return{gif:'./assets/gif/thin.gif',ms:TRANSITION_GIF_MS};
+      if(state==='sparkle')return{gif:'./assets/gif/kirakira.gif',ms:TRANSITION_GIF_MS};
+      return null;
     }
-  }
-  return streak;
-}
 
-// --- 見た目状態の保存/取得 ---
-function getAppearance(){
-  const raw = localStorage.getItem(KEY_APPEARANCE);
-  return raw ? JSON.parse(raw) : null;
-}
-function setAppearance(obj){
-  localStorage.setItem(KEY_APPEARANCE, JSON.stringify(obj));
-}
+    function fmtDate(d=new Date()){return d.toISOString().slice(0,10);}
+    function yesterdayStr(){const d=new Date();d.setDate(d.getDate()-1);return fmtDate(d);}
+    function getAppearance(){return loadJSON(K.APPEARANCE,null);}
+    function setAppearance(o){localStorage.setItem(K.APPEARANCE,JSON.stringify(o));}
 
-// --- 画像/アニメの適用 ---
-const sparkleFx = document.getElementById('sparkleFx');
+    function countStreakEndingAt(dayStr,isTargetDay){
+      const raw=localStorage.getItem(K.MEAL_LOG);const log=raw?JSON.parse(raw):{};let streak=0;let d=new Date(dayStr);
+      for(;;){const key=fmtDate(d);const items=log[key]||[];if(items.length===0)break;
+        if(isTargetDay(items)){streak++;d.setDate(d.getDate()-1);}else break;}
+      return streak;
+    }
 
-function petIdOrDefault(){
-  const pet = loadJSON(KEY_PET,null);
-  return pet?.id || 'pet'; // デフォルトid
-}
+    function dayEnergyAndFlags(items){
+      let energy=0;let balanced=false;
+      for(const it of items){
+        energy+=(ENERGY_SCORE[it.protein]||0)+(ENERGY_SCORE[it.carb]||0)+(VEGGIE_BONUS[it.veggie]||0);
+        if(SPARKLE_RULE(it.protein,it.veggie,it.carb))balanced=true;
+      }
+      return{energy,balanced};
+    }
 
-function assetExists(path){
-  // 画像は 404 でも <img> は event で拾えるが、ここは“試し差し替え”に任せる簡易運用
-  return path; // そのまま返して候補にする（失敗時は onerror でフォールバック）
-}
+    function evaluateDay(dayStr){
+      const raw=localStorage.getItem(K.MEAL_LOG);
+      const log=raw?JSON.parse(raw):{};
+      const items=log[dayStr]||[];
+      if(items.length===0)return{state:'normal',info:{reason:'no_meal'}};
 
-function staticSpriteFor(state){
-  // いまの配置： ./assets/fat.jpg, ./assets/thin.jpg, ./assets/kirakira.jpg
-  switch(state){
-    case 'fat':    return './assets/fat.jpg';
-    case 'thin':   return './assets/thin.jpg';
-    case 'sparkle':return './assets/kirakira.jpg'; // 無ければ PLACEHOLDER に変更OK
-    default:       return './assets/kirakira.jpg';
-  }
-}
+      const {energy,balanced}=dayEnergyAndFlags(items);
+      const isFatDay=a=>dayEnergyAndFlags(a).energy>=FAT_THRESHOLD;
+      const isThinDay=a=>dayEnergyAndFlags(a).energy<THIN_THRESHOLD;
+      const isBalDay=a=>dayEnergyAndFlags(a).balanced===true;
+      const fatStreak=countStreakEndingAt(dayStr,isFatDay);
+      const thinStreak=countStreakEndingAt(dayStr,isThinDay);
+      const balStreak=countStreakEndingAt(dayStr,isBalDay);
+      if(balStreak>=BALANCED_STREAK_N)return{state:'sparkle'};
+      if(fatStreak>=FAT_STREAK_N)return{state:'fat'};
+      if(thinStreak>=THIN_STREAK_N)return{state:'thin'};
+      return{state:'normal'};
+    }
 
-function transitionAnimFor(state){ // ./assets/gif/ 配下
-  if (state==='fat')  return { gif: './assets/gif/fat.gif',  ms: TRANSITION_GIF_MS };
-  if (state==='thin') return { gif: './assets/gif/thin.gif', ms: TRANSITION_GIF_MS };
-  return null;
-}
+    async function applyAppearance(state, { playTransitionIfAny = false } = {}) {
+  // ★ ここが重要：もぐもぐ中・ホールド中・遷移中は上書きしない
+  if (Date.now() < eatHoldUntil || isChewing || isTransitioning) return;
 
-function transitionAnimFor(state){ // ./assets/gif/ 配下
-  if (state==='fat')  return { gif: './assets/gif/fat.gif',  ms: TRANSITION_GIF_MS };
-  if (state==='thin') return { gif: './assets/gif/thin.gif', ms: TRANSITION_GIF_MS };
-  return null;
-}
+  const target = staticSpriteFor(state) + '?t=' + Date.now();
 
-async function applyAppearance(state, {playTransitionIfAny=false}={}){
-  // sparkleはオーバーレイ常時ON/OFF
-  sparkleFx.style.display = (state==='sparkle') ? 'block' : 'none';
-
-  const targetStatic = staticSpriteFor(state);
-
-  // fat/thin へ“今日初めて”変わる時だけ遷移アニメを1回表示（GIF想定）
-  if (playTransitionIfAny && (state==='fat' || state==='thin')) {
+  if (playTransitionIfAny && (state === 'fat' || state === 'thin' || state === 'sparkle')) {
     const trans = transitionAnimFor(state);
     if (trans?.gif) {
-      const originalSrc = petImg.src;
-      petImg.src = trans.gif;
-      await new Promise(r => setTimeout(r, trans.ms)); // GIFはended取れないので時間で戻す
-      petImg.src = targetStatic;
-      return;
+      try {
+        isTransitioning = true;
+        if (petImg) petImg.src = trans.gif + '?t=' + Date.now();
+        await new Promise(r => setTimeout(r, trans.ms));
+      } finally {
+        isTransitioning = false;
+      }
     }
   }
-
-  // 通常は静止画像へ
-  petImg.src = targetStatic;
+  if (petImg) petImg.src = target;
 }
 
-// --- 起動時：前日を評価して状態を更新（初回のみ） ---
-(function dailyEvaluateIfNeeded(){
-  const today  = fmtDate();
-  const yest   = yesterdayStr();
-  const ap     = getAppearance();
-  const id     = petIdOrDefault();
+    function dailyEvaluateIfNeeded(){
+      const today=fmtDate();const yest=yesterdayStr();const ap=getAppearance();
+            if(!ap || ap.lastEval!==today){
+        const result=evaluateDay(yest);
+        const state=result.state;
+        const changedToday=(state!==ap?.state);
+        setAppearance({
+          petId:(pet?.id||'pet'),
+          state,
+          since:(changedToday?today:(ap?.since||today)),
+          lastEval:today
+        });
+        applyAppearance(state,{playTransitionIfAny:changedToday});
+      }else{
+        applyAppearance(ap.state,{playTransitionIfAny:false});
+      }
+    }
 
-  if (!ap || ap.lastEval !== today) {
-    // 前日について判定して今日の見た目に反映
-    const result = evaluateDay(yest);
-    const state  = result.state;
+    // ====== もぐもぐアニメーション ======
+    const CHEW_SRC={gif:'./assets/gif/mogumogu.gif',jpg:'./assets/img/mogumogu.jpg'};
+    const CHEW_GIF_MS=4000, CHEW_HOLD_MS=12000;
+    let eatHoldUntil=0, isChewing=false, chewTimers={gif:null,hold:null};
+    let isTransitioning = false;
 
-    const prevState = ap?.state;
-    const changedToday = (state !== prevState);
+    function clearChewTimers(){
+      if(chewTimers.gif){clearTimeout(chewTimers.gif);}
+      if(chewTimers.hold){clearTimeout(chewTimers.hold);}
+    }
 
-    setAppearance({
-      petId: id,
-      state,
-      since: (changedToday ? today : (ap?.since || today)),
-      lastEval: today
+    async function playChewOnce(){
+      clearChewTimers();
+      isChewing=true;
+      petImg.src=CHEW_SRC.gif+'?t='+Date.now();
+      chewTimers.gif=setTimeout(()=>{
+        petImg.src=CHEW_SRC.jpg+'?t='+Date.now();
+        eatHoldUntil=Date.now()+CHEW_HOLD_MS;
+        chewTimers.hold=setTimeout(()=>{eatHoldUntil=0;isChewing=false;},CHEW_HOLD_MS);
+      },CHEW_GIF_MS);
+    }
+
+    // ====== 食事入力処理 ======
+    const modal=$('#foodModal');
+    const foodForm=$('#foodForm');
+    const foodCancel=$('#foodCancel');
+    const feedBtn=$('#feedBtn');
+    const logEl=$('#log');
+
+    function openModal(){ modal.style.display='flex'; modal.setAttribute('aria-hidden','false'); }
+    function closeModal(){ modal.style.display='none'; modal.setAttribute('aria-hidden','true'); }
+    feedBtn.addEventListener('click',openModal);
+    foodCancel.addEventListener('click',closeModal);
+    modal.addEventListener('click',e=>{ if(e.target===modal)closeModal(); });
+
+    function saveMealForToday(entry){
+      const raw=localStorage.getItem(K.MEAL_LOG);
+      const log=raw?JSON.parse(raw):{};
+      const today=fmtDate();
+      if(!log[today])log[today]=[];
+      log[today].push({...entry,ts:Date.now()});
+      localStorage.setItem(K.MEAL_LOG,JSON.stringify(log));
+    }
+
+    function addLogRow(data){
+      const now=new Date();
+      const jst=now.toLocaleString('ja-JP',{hour12:false});
+      const mapJP={low:'すくなめ',mid:'ふつう',high:'おおめ'};
+      const div=document.createElement('div');
+      div.className='log-item';
+      div.innerHTML=`<strong>🍙 もぐもぐ</strong> <span style="color:#888;">${jst}</span><br>
+        主菜:${mapJP[data.protein]} / 野菜:${mapJP[data.veggie]} / 主食:${mapJP[data.carb]}`;
+      logEl.prepend(div);
+    }
+
+    foodForm.addEventListener('submit',async e=>{
+      e.preventDefault();
+      const fd=new FormData(foodForm);
+      const data={protein:fd.get('protein'),veggie:fd.get('veggie'),carb:fd.get('carb')};
+      closeModal();
+      addLogRow(data);
+      saveMealForToday(data);
+      await playChewOnce();
+      setTimeout(() => {
+        dailyEvaluateIfNeeded();
+      }, CHEW_GIF_MS + 200);
     });
 
-    // 変わった時だけ遷移アニメを再生
-    applyAppearance(state, { playTransitionIfAny: changedToday });
-  } else {
-    // すでに今日評価済みなら保存された見た目を再適用
-    applyAppearance(ap.state, { playTransitionIfAny: false });
-  }
-})();
-
-// --- 食事フォーム submit 時：日次ログに加算（既存の処理に1行追加） ---
-// 既存の foodForm submit ハンドラの中（addLogRow の前後お好きな位置）に：
-// saveMealForToday(data);
-
-/* ========= 追加コードここまで ========= */
-// 画像の読み込みエラーを可視化
-const dbg = (msg)=>console.log('[pet-img]', msg);
-petImg.addEventListener('error', ()=>dbg('ERROR loading '+petImg.src));
-petImg.addEventListener('load',  ()=>dbg('LOADED '+petImg.src));
-
-// applyAppearance の末尾にログを入れると確認しやすい
-async function applyAppearance(state, {playTransitionIfAny=false}={}){
-  sparkleFx.style.display = (state==='sparkle') ? 'block' : 'none';
-  const targetStatic = staticSpriteFor(state);
-
-  if (playTransitionIfAny && (state==='fat' || state==='thin')) {
-    const trans = transitionAnimFor(state);
-    if (trans?.gif) {
-      console.log('[appearance] transition', state, '→', trans.gif);
-      const originalSrc = petImg.src;
-      petImg.src = trans.gif;
-      await new Promise(r => setTimeout(r, trans.ms));
-      petImg.src = targetStatic;
-      console.log('[appearance] static →', targetStatic);
-      return;
-    }
-  }
-
-  console.log('[appearance] static →', targetStatic);
-  petImg.src = targetStatic;
-}
-
-
-</script>
-
+    // ====== 初期描画 ======
+    (function(){
+      const nameEl=$('#petMeta');
+      if(nameEl) nameEl.textContent = petName ? `${petName}（${pet?.label||'ペット'}）` : (pet?.label||'ペット');
+      petImg.src=PLACEHOLDER;
+      dailyEvaluateIfNeeded();
+    })();
+  </script>
 </body>
 </html>
+
