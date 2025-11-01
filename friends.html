@@ -22,7 +22,7 @@
 
         <footer class="nav">
             <button onclick="location.href='mypage.html'">👤</button>
-            <button>👕</button>
+            <button onclick="location.ref='accessory.html'">👕</button>
             <button onclick="location.href='main.html'">🏠</button>
             <button class="active" onclick="location.href='friends.html'">👥</button>
             <button onclick="location.href='settings.html'">⚙️</button>
@@ -46,7 +46,6 @@
 
         list.innerHTML = friends.map(f => `
         <div class="friend-card" onclick="location.href='friend-detail.html?id=${f.id}'">
-            <img src="${f.img}" alt="${f.name}" />
             <p>${f.name}</p>
         </div>
         `).join('');
