@@ -19,6 +19,7 @@ body {
     place-items: center;
     background: radial-gradient(1200px 700px at 50% -10%, #151a22, var(--bg));
     color: var(--text);
+    font-family:"Hachi Maru Pop",cursive
 }
 
 /* ---- iPhoneフレーム風 ---- */

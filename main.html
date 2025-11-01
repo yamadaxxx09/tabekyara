@@ -171,6 +171,216 @@
   </div>
 
   <script type="module">
+mypage
+  const KEY_PET='tky.pet', KEY_PET_NAME='tky.petName';
+  const $=(s,r=document)=>r.querySelector(s);
+  function loadJSON(k,f=null){try{const r=localStorage.getItem(k);return r?JSON.parse(r):f;}catch{return f}}
+
+  const pet=loadJSON(KEY_PET,null);
+  const petName=localStorage.getItem(KEY_PET_NAME)||'';
+  const PLACEHOLDER="./assets/img/pets/placeholder.png";
+
+  function candidatesFrom(src){
+    const set=new Set();
+    if(src) set.add(src);
+    const a=src?.replace("/assets/pets/","/assets/img/pets/");
+    const b=a?.replace(/^\.?\/img\//,"./assets/img/");
+    if(b) set.add(b);
+    if(b?.startsWith("/")) set.add("."+b);
+    if(b?.startsWith("./")) set.add(b.slice(1));
+    const file=(src||"").split("/").pop();
+    if(file && !file.includes(".")) set.add(`./assets/img/pets/${file}.png`);
+    else if(file) set.add(`./assets/img/pets/${file}`);
+    if(b) set.add(b.replace(/^\.\//,"/"));
+    set.add(PLACEHOLDER);
+    return Array.from(set);
+  }
+  function resolveAndLoad(src,imgEl){
+    const tries=candidatesFrom(src); let i=0;
+    (function next(){
+      if(i>=tries.length){ imgEl.src=PLACEHOLDER; return; }
+      const s=tries[i++], probe=new Image();
+      probe.onload=()=>{ imgEl.src=s; };
+      probe.onerror=()=>next();
+      probe.src=s+(s.includes("?")?"&":"?")+"v="+Date.now();
+    })();
+  }
+
+  (function render(){
+  const imgEl=$('#petImg');
+  const nameEl=$('#petMeta');
+  if(!imgEl) return;
+
+  // すでに見た目が決まっているなら初期表示はスキップ（後でapplyAppearanceが上書きする）
+  const apRaw = localStorage.getItem('tky.appearance');
+  if (apRaw) {
+    const typeLabel=pet?.label||pet?.id||'ペット';
+    if(nameEl) nameEl.textContent = petName ? `${petName}（${typeLabel}）` : `${typeLabel}`;
+    return;
+  }
+
+  if(!pet){ imgEl.src=PLACEHOLDER; if(nameEl) nameEl.textContent=''; return; }
+  const typeLabel=pet.label||pet.id||'ペット';
+  if(nameEl) nameEl.textContent = petName ? `${petName}（${typeLabel}）` : `${typeLabel}`;
+  imgEl.alt=`${typeLabel} のプレビュー`;
+  resolveAndLoad(pet.img||PLACEHOLDER,imgEl);
+})();
+
+
+  // ===== モーダル制御 =====
+  const modal = $('#foodModal');
+  const feedBtn = $('#feedBtn');
+  const foodForm = $('#foodForm');
+  const foodCancel = $('#foodCancel');
+  const petImg = $('#petImg');
+  const petAnim = $('#petAnim');
+  const logEl = $('#log');
+
+  function openModal(){
+    modal.style.display = 'flex';
+    modal.setAttribute('aria-hidden','false');
+  }
+  function closeModal(){
+    modal.style.display = 'none';
+    modal.setAttribute('aria-hidden','true');
+  }
+
+  feedBtn?.addEventListener('click', openModal);
+  foodCancel?.addEventListener('click', closeModal);
+  modal?.addEventListener('click', (e)=>{ if(e.target === modal) closeModal(); });
+
+  // ===== もぐもぐ再生だけやる（1回表示→静止画へ戻す） =====
+// ファイル場所： assets/gif/mogumogu.gif
+const CHEW_SRC = { gif: './assets/gif/mogumogu.gif' };
+let chewing = false;
+
+async function playChewOnce() {
+  if (chewing) return;
+  chewing = true;
+
+  // もぐもぐGIFを画像として差し替える
+  const originalSrc = petImg.src; // 元の画像を保存
+  petImg.src = CHEW_SRC.gif;
+
+  // GIFの再生時間分だけ待つ（2〜3秒を目安に調整）
+  await new Promise(r => setTimeout(r, 3000));
+
+  // 終了後、元の画像に戻す
+  petImg.src = originalSrc;
+  chewing = false;
+}
+
+  // ===== 送信でログ追加 → もぐもぐ再生 =====
+  foodForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(foodForm);
+    const data = {
+      protein: fd.get('protein'),
+      veggie:  fd.get('veggie'),
+      carb:    fd.get('carb'),
+    };
+    closeModal();
+
+    addLogRow(data, 'chew'); // いまは「もぐもぐ」固定
+
+    await playChewOnce();
+  });
+
+  function addLogRow(data, kind){
+    const now = new Date();
+    const jst = now.toLocaleString('ja-JP', { hour12:false });
+    const mapJP = { low:'すくなめ', mid:'ふつう', high:'おおめ' };
+    const label = '🍙 もぐもぐ';
+    const div = document.createElement('div');
+    div.className = 'log-item';
+    div.innerHTML =
+      `<strong>${label}</strong> <span style="color:#888;">${jst}</span><br>
+       主菜: ${mapJP[data.protein]} / 野菜: ${mapJP[data.veggie]} / 主食: ${mapJP[data.carb]}`;
+    logEl?.prepend(div);
+  }
+  /* ========= ここから “日次判定 + 見た目維持” の追加コード ========= */
+
+// --- 設定（しきい値・連続日数・演出時間ms） ---
+const ENERGY_SCORE = { low: 1, mid: 2, high: 3 }; // 量スコア（主菜/主食に効く）
+const VEGGIE_BONUS = { low: 0, mid: 1, high: 2 }; // 野菜ボーナス
+const FAT_THRESHOLD   = 8;  // これ以上で「多い」→ fat
+const THIN_THRESHOLD  = 3;  // これ未満で「少ない」
+const THIN_STREAK_N   = 2;  // 少ない日が連続N日でthin
+const SPARKLE_RULE = (p, v, c) => (
+  // バランス判定例：全部mid か、野菜high かつ 他がmid以下
+  (p==='mid' && v==='mid' && c==='mid') ||
+  (v==='high' && (p!=='high' && c!=='high'))
+);
+
+const TRANSITION_GIF_MS = 2200; // to_fat / to_thin のGIF長さ（mp4なら ended でOK）
+
+// --- ストレージキー ---
+const KEY_MEAL_LOG   = 'tky.mealLog';     // { 'YYYY-MM-DD': [ {protein, veggie, carb, ts}, ... ] }
+const KEY_APPEARANCE = 'tky.appearance';  // { petId, state, since:'YYYY-MM-DD', lastEval:'YYYY-MM-DD' }
+//const KEY_PET        = 'tky.pet';
+
+// --- ユーティリティ（日付はローカル基準でOK） ---
+const fmtDate = (d=new Date()) => d.toISOString().slice(0,10);
+const yesterdayStr = () => {
+  const d = new Date(); d.setDate(d.getDate()-1);
+  return fmtDate(d);
+};
+
+// --- ログ保存（既存logUIに加えて日次集計のために保存） ---
+function saveMealForToday(entry){ // entry: {protein, veggie, carb}
+  const raw = localStorage.getItem(KEY_MEAL_LOG);
+  const log = raw ? JSON.parse(raw) : {};
+  const today = fmtDate();
+  if(!log[today]) log[today] = [];
+  log[today].push({...entry, ts: Date.now()});
+  localStorage.setItem(KEY_MEAL_LOG, JSON.stringify(log));
+}
+
+// 既存の foodForm submit の中で、ログ追加の直後に呼ぶとよい：
+// saveMealForToday(data);
+
+// --- 前日を集計して外見を決める ---
+function evaluateDay(dayStr){ // return {state:'normal|fat|thin|sparkle', energy, info }
+  const raw = localStorage.getItem(KEY_MEAL_LOG);
+  const log = raw ? JSON.parse(raw) : {};
+  const items = log[dayStr] || [];
+  if(items.length===0) return { state:'normal', energy:0, info:{ reason:'no_meal' } };
+
+  // 1日の合計スコア
+  let energy = 0;
+  let balanced = false;
+  for(const it of items){
+    energy += (ENERGY_SCORE[it.protein]||0) + (ENERGY_SCORE[it.carb]||0) + (VEGGIE_BONUS[it.veggie]||0);
+    if (SPARKLE_RULE(it.protein, it.veggie, it.carb)) balanced = true;
+  }
+
+  // 仮のルール：balancedなら sparkle を最優先
+  if (balanced) return { state:'sparkle', energy, info:{ reason:'balanced' } };
+  if (energy >= FAT_THRESHOLD) return { state:'fat', energy, info:{ reason:'high_energy' } };
+
+  // thin は “少ない日” が連続 N 日
+  const isThinDay = energy < THIN_THRESHOLD;
+  if (isThinDay) {
+    const streak = countThinStreakEndingAt(dayStr);
+    if (streak >= THIN_STREAK_N) return { state:'thin', energy, info:{ reason:'thin_streak', streak } };
+  }
+
+  return { state:'normal', energy, info:{ reason:'default' } };
+}
+
+function countThinStreakEndingAt(dayStr){
+  const raw = localStorage.getItem(KEY_MEAL_LOG);
+  const log = raw ? JSON.parse(raw) : {};
+  let streak = 0;
+  let d = new Date(dayStr);
+  // 後ろ向きに “少ない日” を数える
+  for(;;){
+    const key = fmtDate(d);
+    const items = log[key] || [];
+    let energy = 0;
+    for(const it of items){
+      energy += (ENERGY_SCORE[it.protein]||0) + (ENERGY_SCORE[it.carb]||0) + (VEGGIE_BONUS[it.veggie]||0);
+=======
     const K = { PET:'tky.pet', PET_NAME:'tky.petName', MEAL_LOG:'tky.mealLog', APPEARANCE:'tky.appearance' };
     const $ = (s,r=document)=>r.querySelector(s);
     function loadJSON(k,f=null){ try{const r=localStorage.getItem(k); return r?JSON.parse(r):f;}catch{return f;} }
@@ -194,6 +404,7 @@
         case 'sparkle':return'./assets/img/kirakira.jpg';
         default:return(pet?.img||PLACEHOLDER);
       }
+main
     }
     function transitionAnimFor(state){
       if(state==='fat')return{gif:'./assets/gif/fat.gif',ms:TRANSITION_GIF_MS};

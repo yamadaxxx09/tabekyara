@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>フレンド一覧</title>
+        <link href="https://fonts.googleapis.com/css2?family=Hachi+Maru+Pop&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="assets/common.css" />
+        <link rel="stylesheet" href="assets/friends.css" />
+    </head>
+    <body>
+    <div class="phone">
+        <div class="screen">
+        <header>
+            <h1>フレンド</h1>
+        </header>
+
+        <main>
+            <button class="add-btn" onclick="location.href='friend-search.html'">＋ 友達を作る</button>
+            <div class="friends-list" id="friendList"></div>
+        </main>
+
+        <footer class="nav">
+            <button onclick="location.href='mypage.html'">👤</button>
+            <button>👕</button>
+            <button onclick="location.href='main.html'">🏠</button>
+            <button class="active" onclick="location.href='friends.html'">👥</button>
+            <button onclick="location.href='settings.html'">⚙️</button>
+        </footer>
+        </div>
+    </div>
+
+    <script type="module">
+        import { getFriends, removeFriend } from './assets/friends.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+        const list = document.getElementById('friendList');
+        const friends = getFriends();
+
+        if (friends.length === 0) {
+            list.innerHTML = `
+            <p class="empty">まだフレンドがいません 😢<br>「友達を作る」から追加してみよう！</p>
+            `;
+            return;
+        }
+
+        list.innerHTML = friends.map(f => `
+        <div class="friend-card" onclick="location.href='friend-detail.html?id=${f.id}'">
+            <img src="${f.img}" alt="${f.name}" />
+            <p>${f.name}</p>
+        </div>
+        `).join('');
+
+
+        // ❌ 削除ボタンイベント登録
+        document.querySelectorAll('.remove-btn').forEach(btn => {
+            btn.addEventListener('click', e => {
+            e.stopPropagation(); // カードクリックと重ならないように
+            const id = btn.dataset.id;
+
+        // ✅ 確認ダイアログ追加
+        const confirmDelete = confirm(`本当に削除しますか？😢`);
+        if (!confirmDelete) return;
+
+            removeFriend(id);
+            alert('フレンドを削除しました');
+            location.reload(); // 再読み込みで反映
+            });
+        });
+        });
+    </script>
+
+
+</body>
+</html>
